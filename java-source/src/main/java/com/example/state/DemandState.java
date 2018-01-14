@@ -85,7 +85,8 @@ public class DemandState implements LinearState, QueryableState {
 
             return new DemandSchemaV1.PersistentDemand(
                     this.description, this.amount, this.startDate, this.endDate, this.sponsor.toString(), this.platformLead.toString(),
-                    approvalPartiesStringList, this.linearId.getId());
+                    approvalPartiesStringList
+                    , this.linearId.getId());
         }else{
             throw new IllegalArgumentException("Unrecognised schema $schema");
         }
