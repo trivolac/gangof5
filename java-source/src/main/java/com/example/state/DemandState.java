@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class DemandState implements LinearState, QueryableState {
@@ -25,6 +26,17 @@ public class DemandState implements LinearState, QueryableState {
     private final Party platformLead;
     private final List<Party> approvalParties;
     private final UniqueIdentifier linearId;
+
+    public DemandState(String description, Party sponsor, Party platformLead) {
+        this.description = description;
+        this.sponsor = sponsor;
+        this.platformLead = platformLead;
+        this.amount = 0;
+        this.startDate = null;
+        this.endDate = null;
+        this.approvalParties = null;
+        this.linearId = null;
+    }
 
     public DemandState(String description, Integer amount, Date startDate, Date endDate, Party sponsor, Party platformLead, List<Party> approvalParties) {
         this.description = description;
@@ -81,12 +93,17 @@ public class DemandState implements LinearState, QueryableState {
     @Override
     public PersistentState generateMappedObject(MappedSchema schema) {
         if(schema instanceof DemandSchemaV1){
-            List<String> approvalPartiesStringList = null;//approvalParties.stream().map(Party::toString).collect(Collectors.toList());
+            List<String> approvalPartiesStringList = null;
+            if(approvalParties != null){
+                approvalPartiesStringList = approvalParties.stream().map(Party::toString).collect(Collectors.toList());
+            }
+
+            UUID linearIdString = (this.linearId == null) ? null : this.linearId.getId();
 
             return new DemandSchemaV1.PersistentDemand(
                     this.description, this.amount, this.startDate, this.endDate, this.sponsor.toString(), this.platformLead.toString(),
                     approvalPartiesStringList
-                    , this.linearId.getId());
+                    , linearIdString);
         }else{
             throw new IllegalArgumentException("Unrecognised schema $schema");
         }
@@ -98,7 +115,9 @@ public class DemandState implements LinearState, QueryableState {
         List<AbstractParty> partyList = new ArrayList<>();
         partyList.add(sponsor);
         partyList.add(platformLead);
-        //partyList.addAll(approvalParties);
+        if(approvalParties != null){
+            partyList.addAll(approvalParties);
+        }
         return partyList;
     }
 

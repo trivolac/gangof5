@@ -14,6 +14,8 @@ import static net.corda.core.contracts.ContractsDSL.requireSingleCommand;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 public class DemandContract implements Contract{
+    public static final String DEMAND_CONTRACT_ID = "com.example.contract.DemandContract";
+
     @Override
     public void verify(LedgerTransaction tx) throws IllegalArgumentException {
         final CommandWithParties<Commands> command = requireSingleCommand(tx.getCommands(), Commands.class);
