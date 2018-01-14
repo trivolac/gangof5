@@ -23,18 +23,17 @@ public class DemandState implements LinearState, QueryableState {
     private final Date endDate;
     private final Party sponsor;
     private final Party platformLead;
-    //private final List<Party> approvalParties;
+    private final List<Party> approvalParties;
     private final UniqueIdentifier linearId;
 
-    //public DemandState(String description, Integer amount, Date startDate, Date endDate, Party sponsor, Party platformLead, List<Party> approvalParties) {
-    public DemandState(String description, Integer amount, Date startDate, Date endDate, Party sponsor, Party platformLead) {
+    public DemandState(String description, Integer amount, Date startDate, Date endDate, Party sponsor, Party platformLead, List<Party> approvalParties) {
         this.description = description;
         this.amount = amount;
         this.startDate = startDate;
         this.endDate = endDate;
         this.sponsor = sponsor;
         this.platformLead = platformLead;
-        //this.approvalParties = approvalParties;
+        this.approvalParties = approvalParties;
         linearId = new UniqueIdentifier();
     }
 
@@ -62,9 +61,9 @@ public class DemandState implements LinearState, QueryableState {
         return platformLead;
     }
 
-    //public List<Party> getApprovalParties() {
-        //return approvalParties;
-    //}
+    public List<Party> getApprovalParties() {
+        return approvalParties;
+    }
 
     @NotNull
     @Override
@@ -112,7 +111,7 @@ public class DemandState implements LinearState, QueryableState {
                 ", endDate=" + endDate +
                 ", sponsor=" + sponsor +
                 ", platformLead=" + platformLead +
-                //", approvalParties=" + approvalParties +
+                ", approvalParties=" + approvalParties +
                 ", linearId=" + linearId +
                 '}';
     }
