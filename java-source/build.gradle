@@ -61,7 +61,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         cordapps = ["$corda_release_group:corda-finance:$corda_release_version"]
     }
     node {
-        name "O=PartyA,L=London,C=GB"
+        name "O=Sponsor,L=Singapore,C=SG"
         advertisedServices = []
         p2pPort 10005
         rpcPort 10006
@@ -72,7 +72,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         ]]]
     }
     node {
-        name "O=PartyB,L=New York,C=US"
+        name "O=PL1,L=Singapore,C=SG"
         advertisedServices = []
         p2pPort 10008
         rpcPort 10009
@@ -83,11 +83,55 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         ]]]
     }
     node {
-        name "O=PartyC,L=Paris,C=FR"
+        name "O=PL2,L=Singapore,C=SG"
         advertisedServices = []
         p2pPort 10011
         rpcPort 10012
         webPort 10013
+        cordapps = ["$corda_release_group:corda-finance:$corda_release_version"]
+        rpcUsers = [[ user: "user1", "password": "test", "permissions": [
+                "StartFlow.com.example.flow.ExampleFlow\$Initiator"
+        ]]]
+    }
+    node {
+        name "O=CIO,L=Singapore,C=SG"
+        advertisedServices = []
+        p2pPort 10014
+        rpcPort 10015
+        webPort 10016
+        cordapps = ["$corda_release_group:corda-finance:$corda_release_version"]
+        rpcUsers = [[ user: "user1", "password": "test", "permissions": [
+                "StartFlow.com.example.flow.ExampleFlow\$Initiator"
+        ]]]
+    }
+    node {
+        name "O=COO,L=Singapore,C=SG"
+        advertisedServices = []
+        p2pPort 10017
+        rpcPort 10018
+        webPort 10019
+        cordapps = ["$corda_release_group:corda-finance:$corda_release_version"]
+        rpcUsers = [[ user: "user1", "password": "test", "permissions": [
+                "StartFlow.com.example.flow.ExampleFlow\$Initiator"
+        ]]]
+    }
+    node {
+        name "O=DLTeam1,L=Singapore,C=SG"
+        advertisedServices = []
+        p2pPort 10020
+        rpcPort 10021
+        webPort 10022
+        cordapps = ["$corda_release_group:corda-finance:$corda_release_version"]
+        rpcUsers = [[ user: "user1", "password": "test", "permissions": [
+                "StartFlow.com.example.flow.ExampleFlow\$Initiator"
+        ]]]
+    }
+    node {
+        name "O=DLTeam2,L=Singapore,C=SG"
+        advertisedServices = []
+        p2pPort 10023
+        rpcPort 10024
+        webPort 10025
         cordapps = ["$corda_release_group:corda-finance:$corda_release_version"]
         rpcUsers = [[ user: "user1", "password": "test", "permissions": [
                 "StartFlow.com.example.flow.ExampleFlow\$Initiator"
