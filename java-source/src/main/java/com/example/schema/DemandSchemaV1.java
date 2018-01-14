@@ -5,6 +5,7 @@ import net.corda.core.schemas.MappedSchema;
 import net.corda.core.schemas.PersistentState;
 
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.util.Date;
@@ -25,7 +26,8 @@ public class DemandSchemaV1 extends MappedSchema {
         @Column(name = "endDate") private final Date endDate;
         @Column(name = "sponsor") private final String sponsor;
         @Column(name = "platformLead") private final String platformLead;
-       // @Column(name = "approvalParties") private final List<String> approvalParties;
+        @Column(name = "approvalParties") @ElementCollection
+        private final List<String> approvalParties;
         @Column(name = "linearId") private final UUID linearId;
 
         public PersistentDemand(String description, int amount, Date startDate, Date endDate, String sponsor, String platformLead, List<String> approvalParties, UUID linearId){
@@ -35,7 +37,7 @@ public class DemandSchemaV1 extends MappedSchema {
             this.endDate = endDate;
             this.sponsor = sponsor;
             this.platformLead = platformLead;
-            //this.approvalParties = approvalParties;
+            this.approvalParties = approvalParties;
             this.linearId = linearId;
         }
 
@@ -63,9 +65,9 @@ public class DemandSchemaV1 extends MappedSchema {
             return platformLead;
         }
 
-        /*public List<String> getApprovalParties() {
+        public List<String> getApprovalParties() {
             return approvalParties;
-        }*/
+        }
 
         public UUID getLinearId() {
             return linearId;
