@@ -55,6 +55,11 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
             .reverse());
 
     demoApp.getIOUs();
+
+    //refresh every 5s
+    setInterval(function(){
+        demoApp.getIOUs();
+    }, 5000);
 });
 
 app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
