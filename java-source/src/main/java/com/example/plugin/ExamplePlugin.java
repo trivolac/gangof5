@@ -23,7 +23,8 @@ public class ExamplePlugin implements WebServerPluginRegistry {
      */
     private final Map<String, String> staticServeDirs = ImmutableMap.of(
             // This will serve the exampleWeb directory in resources to /web/example
-            "example", getClass().getClassLoader().getResource("exampleWeb").toExternalForm()
+            "example", getClass().getClassLoader().getResource("exampleWeb").toExternalForm(),
+            "demand", getClass().getClassLoader().getResource("demandWeb").toExternalForm()
     );
 
     @Override public List<Function<CordaRPCOps, ?>> getWebApis() { return webApis; }
