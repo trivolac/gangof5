@@ -7,6 +7,8 @@ import net.corda.core.contracts.Contract;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.transactions.LedgerTransaction;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -51,6 +53,10 @@ public class DemandContract implements Contract{
                 require.using("The demand's amount must be non-negative.",
                         out.getAmount() > 0);
 
+                require.using("The startDate should not be lesser than current date.", isCurrentDateOrGrtr(out.getStartDate()));
+
+                //require.using("The endDate should not be greater than 6 months.", );
+
                 return null;
             });
         }else if(command.getValue() instanceof Commands.Approve){
@@ -65,6 +71,14 @@ public class DemandContract implements Contract{
         }else{
             throw new IllegalArgumentException("Unrecognised command");
         }
+    }
+
+    private boolean isCurrentDateOrGrtr(Date startDate){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = new Date();
+        if (startDate.after(date) || sdf.format(date).equals(sdf.format(startDate)))
+            return true;
+        return false;
     }
 
     public interface Commands extends CommandData {
