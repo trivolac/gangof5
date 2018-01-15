@@ -35,10 +35,11 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
         <div class="navbar-header">
             <a class="navbar-brand" href="#">{{demoApp.thisNode}}</a>
         </div>
-        <button ng-click="demoApp.openModal()" type="button" class="btn btn-primary navbar-btn">Create Demand</button>
+        <button ng-click="demoApp.openCreateDemandModal()" type="button" class="btn btn-primary navbar-btn">Create Demand</button>
     </div>
 </nav>
-<script type="text/ng-template" id="demoAppModal.html">
+
+<script type="text/ng-template" id="createDemandModal.html">
     <div class="modal-header">
         <h4 class="modal-title">Add new Demand</h4>
     </div>
@@ -68,6 +69,40 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
         </div>
     </form>
 </script>
+
+<script type="text/ng-template" id="updateDemandModal.html">
+    <div class="modal-header">
+        <h4 class="modal-title">Update Demand Estimates</h4>
+    </div>
+    <form>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="amount" class="control-label">Amount (Int):</label>
+                <input type="text" ng-model="modalInstance.form.amount" class="form-control" id="amount">
+            </div>
+            <div class="form-group">
+                <label for="startDate" class="control-label">Value (Int):</label>
+                <input type="date" ng-model="modalInstance.form.startDate" class="form-control" id="startDate">
+            </div>
+            <div class="form-group">
+                <label for="endDate" class="control-label">Value (Int):</label>
+                <input type="date" ng-model="modalInstance.form.endDate" class="form-control" id="endDate">
+            </div>
+            <div ng-show="modalInstance.formError" class="form-group">
+                <div class="alert alert-danger" role="alert">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    <span class="sr-only">Error:</span>
+                    Enter valid Demand parameters
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default">Close</button>
+            <button type="button" class="btn btn-primary">Submit For Approval</button>
+        </div>
+    </form>
+</script>
+
 <script type="text/ng-template" id="messageContent.html">
     <div class="modal-body" id="modal-body">
         {{ modalInstanceTwo.message }}
@@ -90,11 +125,44 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
         </div>
         <div ng-repeat="demand in demoApp.demands" class="panel panel-default">
             <div class="panel-body">
-                <ul>
-                    <li>Sponsor: {{demand.sponsor}}</li>
-                    <li>Platform Lead: {{demand.platformLead}}</li>
-                    <li>Description: {{demand.description}}</li>
-                </ul>
+                <table>
+                    <tr>
+                        <td>ID: </td>
+                        <td>{{demand.linearId.id}}</td>
+                    </tr>
+                    <tr>
+                        <td>Sponsor: </td>
+                        <td>{{demand.sponsor}}</td>
+                    </tr>
+                    <tr>
+                        <td>Platform Lead: </td>
+                        <td>{{demand.platformLead}}</td>
+                    </tr>
+                    <tr>
+                        <td>Description: </td>
+                        <td>{{demand.description}}</td>
+                    </tr>
+                    <tr>
+                        <td>Amount: </td>
+                        <td>{{demand.amount}}</td>
+                    </tr>
+                    <tr>
+                        <td>Start Date: </td>
+                        <td>{{demand.startDate}}</td>
+                    </tr>
+                    <tr>
+                        <td>End Date: </td>
+                        <td>{{demand.endDate}}</td>
+                    </tr>
+                    <tr>
+                        <td>Approval Parties: &emsp;</td>
+                        <td>{{demand.approvalParties.length === 0 ? '' : demand.approvalParties}}</td>
+                    </tr>
+                </table>
+                <div class="control-group"></div>
+                <div class="float-right">
+                    <button ng-click="demoApp.openUpdateDemandModal()" type="button" class="btn btn-primary">Update Demand Estimates</button>
+                </div>
             </div>
         </div>
     </div>

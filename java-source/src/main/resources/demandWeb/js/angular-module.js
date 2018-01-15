@@ -34,9 +34,24 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
 
     $http.get("/api/example/peers").then((response) => peers = response.data.peers);
 
-    demoApp.openModal = () => {
+    demoApp.openCreateDemandModal = () => {
         const modalInstance = $uibModal.open({
-            templateUrl: 'demoAppModal.html',
+            templateUrl: 'createDemandModal.html',
+            controller: 'ModalInstanceCtrl',
+            controllerAs: 'modalInstance',
+            resolve: {
+                demoApp: () => demoApp,
+                apiBaseURL: () => apiBaseURL,
+                peers: () => peers
+            }
+        });
+
+        modalInstance.result.then(() => {}, () => {});
+    };
+
+    demoApp.openUpdateDemandModal = () => {
+        const modalInstance = $uibModal.open({
+            templateUrl: 'updateDemandModal.html',
             controller: 'ModalInstanceCtrl',
             controllerAs: 'modalInstance',
             resolve: {
@@ -55,6 +70,11 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
             .reverse());
 
     demoApp.getDemands();
+
+    //refresh every 5s
+    setInterval(function(){
+        demoApp.getDemands();
+    }, 5000);
 });
 
 app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
@@ -64,7 +84,7 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
     modalInstance.form = {};
     modalInstance.formError = false;
 
-    // Validate and create IOU.
+    // Validate and create Demand.
     modalInstance.create = () => {
         if (invalidFormInput()) {
             modalInstance.formError = true;
