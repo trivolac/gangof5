@@ -1,7 +1,9 @@
 package com.example.api;
 
 import com.example.flow.DemandCreationFlow;
+import com.example.flow.DemandUpdateFlow;
 import com.example.state.DemandState;
+import com.example.state.IOUState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.corda.core.contracts.StateAndRef;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -104,5 +107,51 @@ public class DemandApi {
             logger.error(ex.getMessage(), ex);
             return Response.status(BAD_REQUEST).entity(msg).build();
         }
+    }
+
+    @PUT
+    @Path("update-demand")
+    public Response updateDemand(@QueryParam("description") String description, @QueryParam("partyName") CordaX500Name partyName, @QueryParam("startDate") Date startDate, @QueryParam("endDate") Date endDate, @QueryParam("amount") int amount) throws InterruptedException, ExecutionException {
+        logger.error("Starting validation");
+        if (description == null || description.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'description' must exist.\n").build();
+        }
+        if (partyName == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'partyName' missing or has wrong format.\n").build();
+        }
+
+        final Party otherParty = rpcOps.wellKnownPartyFromX500Name(partyName);
+        if (otherParty == null) {
+            return Response.status(BAD_REQUEST).entity("Party named " + partyName + "cannot be found.\n").build();
+        }
+        logger.error("Other party :: " + otherParty);
+
+        logger.error("Starting Flow");
+
+        try {
+            FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
+                    .startTrackedFlowDynamic(DemandUpdateFlow.Initiator.class, description, otherParty);
+            flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s\n", evt));
+
+            // The line below blocks and waits for the flow to return.
+            final SignedTransaction result = flowHandle
+                    .getReturnValue()
+                    .get();
+
+            final String msg = String.format("Transaction id %s updated to ledger.\n", result.getId());
+            return Response.status(CREATED).entity(msg).build();
+
+        } catch (Throwable ex) {
+            final String msg = ex.getMessage();
+            logger.error(ex.getMessage(), ex);
+            return Response.status(BAD_REQUEST).entity(msg).build();
+        }
+    }
+
+    @GET
+    @Path("state")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<StateAndRef<DemandState>> getStates() {
+        return rpcOps.vaultQuery(DemandState.class).getStates();
     }
 }
