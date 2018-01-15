@@ -34,8 +34,8 @@ public class DemandState implements LinearState, QueryableState {
         this.amount = 0;
         this.startDate = null;
         this.endDate = null;
-        this.approvalParties = null;
-        this.linearId = null;
+        this.approvalParties = new ArrayList<>();
+        this.linearId = new UniqueIdentifier();
     }
 
     public DemandState(String description, Integer amount, Date startDate, Date endDate, Party sponsor, Party platformLead, List<Party> approvalParties) {
@@ -115,9 +115,7 @@ public class DemandState implements LinearState, QueryableState {
         List<AbstractParty> partyList = new ArrayList<>();
         partyList.add(sponsor);
         partyList.add(platformLead);
-        if(approvalParties != null){
-            partyList.addAll(approvalParties);
-        }
+        partyList.addAll(approvalParties);
         return partyList;
     }
 

@@ -7,10 +7,14 @@ import com.google.common.collect.Sets;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.StateAndContract;
 import net.corda.core.flows.*;
+import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
+
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.example.contract.DemandContract.DEMAND_CONTRACT_ID;
 
@@ -52,6 +56,11 @@ public class DemandCreationFlow {
             this.platformLead = platformLead;
         }
 
+        @Override
+        public ProgressTracker getProgressTracker() {
+            return progressTracker;
+        }
+
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
@@ -63,7 +72,8 @@ public class DemandCreationFlow {
             progressTracker.setCurrentStep(GENERATING_TRANSACTION);
             // Generate an unsigned transaction.
             DemandState demandState = new DemandState(description, initiatorParty, platformLead);
-            final Command<DemandContract.Commands.Create> txCommand = new Command(new DemandContract.Commands.Create(), demandState.getParticipants());
+            final Command<DemandContract.Commands.Create> txCommand = new Command<>(new DemandContract.Commands.Create(),
+                    demandState.getParticipants().stream().filter(Objects::nonNull).map(AbstractParty::getOwningKey).collect(Collectors.toList()));
             final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(demandState, DEMAND_CONTRACT_ID), txCommand);
 
             // Stage 2.

@@ -31,11 +31,8 @@ public class DemandContract implements Contract{
                         out.getSponsor() != out.getPlatformLead());
                 require.using("Sponsors and platform lead must be the only signers.",
                         command.getSigners().containsAll(out.getParticipants().stream().filter(Objects::nonNull).map(AbstractParty::getOwningKey).collect(Collectors.toList())));
-
-                // IOU-specific constraints.
-                require.using("The demand's amount must be non-negative.",
-                        out.getAmount() > 0);
-
+                require.using("Description must exist.",
+                        !out.getDescription().isEmpty());
                 return null;
             });
         }else if(command.getValue() instanceof Commands.Update){
