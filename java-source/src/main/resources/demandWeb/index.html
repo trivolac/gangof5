@@ -78,33 +78,33 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
         <div class="modal-body">
             <div class="form-group">
                 <label for="id" class="control-label">ID:</label>
-                <input type="text" class="form-control" id="id" value={{modalInstance.id}} disabled>
+                <input type="text" class="form-control" id="id" value={{updateModalInstance.id}} disabled>
             </div>
             <div class="form-group">
                 <label for="sponsor" class="control-label">Sponsor:</label>
-                <input type="text" class="form-control" id="sponsor" value={{modalInstance.sponsor}} disabled>
+                <input type="text" class="form-control" id="sponsor" value={{updateModalInstance.sponsor}} disabled>
             </div>
             <div class="form-group">
                 <label for="platformLead" class="control-label">Platform Lead:</label>
-                <input type="text" class="form-control" id="platformLead" value={{modalInstance.platformLead}} disabled>
+                <input type="text" class="form-control" id="platformLead" value={{updateModalInstance.platformLead}} disabled>
             </div>
             <div class="form-group">
                 <label for="descriptionForUpdate" class="control-label">Description:</label>
-                <input type="text" class="form-control" id="descriptionForUpdate" value={{modalInstance.description}} disabled>
+                <input type="text" class="form-control" id="descriptionForUpdate" value={{updateModalInstance.description}} disabled>
             </div>
             <div class="form-group">
                 <label for="amount" class="control-label">Amount (Int):</label>
-                <input type="text" ng-model="modalInstance.form.amount" class="form-control" id="amount">
+                <input type="text" ng-model="updateModalInstance.form.amount" class="form-control" id="amount">
             </div>
             <div class="form-group">
                 <label for="startDate" class="control-label">Start Date:</label>
-                <input type="date" ng-model="modalInstance.form.startDate" class="form-control" id="startDate">
+                <input type="date" ng-model="updateModalInstance.form.startDate" class="form-control" id="startDate">
             </div>
             <div class="form-group">
                 <label for="endDate" class="control-label">End Date:</label>
-                <input type="date" ng-model="modalInstance.form.endDate" class="form-control" id="endDate">
+                <input type="date" ng-model="updateModalInstance.form.endDate" class="form-control" id="endDate">
             </div>
-            <div ng-show="modalInstance.formError" class="form-group">
+            <div ng-show="updateModalInstance.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
                     <span class="sr-only">Error:</span>
@@ -113,8 +113,8 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
             </div>
         </div>
         <div class="modal-footer">
-            <button ng-click="modalInstance.cancel()" type="button" class="btn btn-default">Close</button>
-            <button ng-click="modalInstance.update()" type="button" class="btn btn-success">Submit For Approval</button>
+            <button ng-click="updateModalInstance.cancel()" type="button" class="btn btn-default">Close</button>
+            <button ng-click="updateModalInstance.update(updateModalInstance.id)" type="button" class="btn btn-success">Submit For Approval</button>
         </div>
     </form>
 </script>
