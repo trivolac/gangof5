@@ -29,10 +29,14 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     // We identify the node.
     const apiBaseURL = "/api/demand/";
     let peers = [];
+    let platformLeads = [];
 
     $http.get(apiBaseURL + "me").then((response) => demoApp.thisNode = response.data.me);
 
     $http.get("/api/example/peers").then((response) => peers = response.data.peers);
+
+    $http.get("/api/demand/platformLeads").then((response) => platformLeads = response.data.plPeers);
+    demoApp.plResponse = platformLeads;
 
     demoApp.openCreateDemandModal = () => {
         const modalInstance = $uibModal.open({
@@ -42,7 +46,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
             resolve: {
                 demoApp: () => demoApp,
                 apiBaseURL: () => apiBaseURL,
-                peers: () => peers
+                peers: () => platformLeads
             }
         });
 
@@ -83,6 +87,7 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
     modalInstance.peers = peers;
     modalInstance.form = {};
     modalInstance.formError = false;
+
 
     // Validate and create Demand.
     modalInstance.create = () => {
