@@ -35,7 +35,7 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
         <div class="navbar-header">
             <a class="navbar-brand" href="#">{{demoApp.thisNode}}</a>
         </div>
-        <button ng-click="demoApp.openCreateDemandModal()" type="button" class="btn btn-primary navbar-btn">Create Demand</button>
+        <button ng-show="demoApp.isSponsor" ng-click="demoApp.openCreateDemandModal()" type="button" class="btn btn-primary navbar-btn">Create Demand</button>
     </div>
 </nav>
 
@@ -176,9 +176,11 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td>{{demand.approvalParties.length === 0 ? '' : demand.approvalParties}}</td>
                     </tr>
                 </table>
-                <br/>
-                <div class="float-right">
-                    <button ng-click="demoApp.openUpdateDemandModal(demand)" type="button" class="btn btn-default">Update Demand Estimates</button>
+                <div ng-show="demoApp.isPlatformLead">
+                    <br/>
+                    <div class="float-right">
+                        <button ng-click="demoApp.openUpdateDemandModal(demand)" type="button" class="btn btn-default">Update Demand Estimates</button>
+                    </div>
                 </div>
             </div>
         </div>

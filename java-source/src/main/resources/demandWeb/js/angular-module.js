@@ -31,7 +31,13 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     let peers = [];
     let platformLeads = [];
 
-    $http.get(apiBaseURL + "me").then((response) => demoApp.thisNode = response.data.me);
+    $http.get(apiBaseURL + "me").then(function(response){
+        demoApp.thisNode = response.data.me;
+
+        let organisation = demoApp.thisNode.split(",")[2].split("=")[1];
+        demoApp.isSponsor = organisation === "Sponsor";
+        demoApp.isPlatformLead = organisation.substring(0,2) === "PL";
+    });
 
     $http.get("/api/example/peers").then((response) => peers = response.data.peers);
 
