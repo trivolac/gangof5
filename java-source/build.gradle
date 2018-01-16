@@ -68,7 +68,8 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         webPort 10007
         cordapps = ["$corda_release_group:corda-finance:$corda_release_version"]
         rpcUsers = [[ user: "user1", "password": "test", "permissions": [
-                "StartFlow.com.example.flow.ExampleFlow\$Initiator"
+                "StartFlow.com.example.flow.ExampleFlow\$Initiator",
+                "StartFlow.com.example.flow.DemandCreationFlow\$Initiator"
         ]]]
     }
     node {
@@ -144,3 +145,9 @@ task runExampleClientRPCJava(type: JavaExec) {
     main = 'com.example.client.ExampleClientRPC'
     args 'localhost:10006'
 }
+
+//task runDemandClientRPCJava(type: JavaExec) {
+//    classpath = sourceSets.main.runtimeClasspath
+//    main = 'com.example.client.DemandClientRPC'
+//    args 'localhost:10006'
+//}

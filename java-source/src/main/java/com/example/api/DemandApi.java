@@ -13,6 +13,7 @@ import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.messaging.FlowHandle;
 import net.corda.core.messaging.FlowProgressHandle;
+import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 
@@ -35,6 +37,8 @@ public class DemandApi {
     private final CordaX500Name myLegalName;
 
     private final List<String> serviceNames = ImmutableList.of("Controller", "Network Map Service");
+
+    private final String platformLeadServiceNamePrefix = "PL";
 
     static private final Logger logger = LoggerFactory.getLogger(DemandApi.class);
 
@@ -61,6 +65,24 @@ public class DemandApi {
     public List<StateAndRef<DemandState>> getDemands() {
         return rpcOps.vaultQuery(DemandState.class).getStates();
     }
+
+
+    /**
+     * Returns all parties registered with the [NetworkMapService]. These names can be used to look up identities
+     * using the [IdentityService].
+     */
+    @GET
+    @Path("platformLeads")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, List<CordaX500Name>> getPlatformLeadPeers() {
+        List<NodeInfo> nodeInfoSnapshot = rpcOps.networkMapSnapshot();
+        return ImmutableMap.of("plPeers", nodeInfoSnapshot
+                .stream()
+                .map(node -> node.getLegalIdentities().get(0).getName())
+                .filter(name -> !name.equals(myLegalName) && name.getOrganisation().startsWith(platformLeadServiceNamePrefix))
+                .collect(toList()));
+    }
+
 
     /**
      * Initiates a flow to create a Demand between two parties.

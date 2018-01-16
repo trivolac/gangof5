@@ -29,35 +29,49 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     // We identify the node.
     const apiBaseURL = "/api/demand/";
     let peers = [];
+    let platformLeads = [];
 
-    $http.get(apiBaseURL + "me").then((response) => demoApp.thisNode = response.data.me);
+    $http.get(apiBaseURL + "me").then(function(response){
+        demoApp.thisNode = response.data.me;
+
+        let organisation = demoApp.thisNode.split(",")[2].split("=")[1];
+        demoApp.isSponsor = organisation === "Sponsor";
+        demoApp.isPlatformLead = organisation.substring(0,2) === "PL";
+    });
 
     $http.get("/api/example/peers").then((response) => peers = response.data.peers);
+
+    $http.get("/api/demand/platformLeads").then((response) => platformLeads = response.data.plPeers);
+    demoApp.plResponse = platformLeads;
 
     demoApp.openCreateDemandModal = () => {
         const modalInstance = $uibModal.open({
             templateUrl: 'createDemandModal.html',
-            controller: 'ModalInstanceCtrl',
-            controllerAs: 'modalInstance',
+            controller: 'ModalCreateDemandCtrl',
+            controllerAs: 'createModalInstance',
             resolve: {
                 demoApp: () => demoApp,
                 apiBaseURL: () => apiBaseURL,
-                peers: () => peers
+                peers: () => platformLeads
             }
         });
 
         modalInstance.result.then(() => {}, () => {});
     };
 
-    demoApp.openUpdateDemandModal = () => {
+    demoApp.openUpdateDemandModal = (demand) => {
         const modalInstance = $uibModal.open({
             templateUrl: 'updateDemandModal.html',
-            controller: 'ModalInstanceCtrl',
-            controllerAs: 'modalInstance',
+            controller: 'ModalUpdateDemandCtrl',
+            controllerAs: 'updateModalInstance',
             resolve: {
                 demoApp: () => demoApp,
                 apiBaseURL: () => apiBaseURL,
-                peers: () => peers
+                peers: () => peers,
+                id: () => demand.linearId.id,
+                sponsor: () => demand.sponsor,
+                platformLead: () => demand.platformLead,
+                description: () => demand.description,
             }
         });
 
@@ -77,38 +91,45 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     }, 5000);
 });
 
-app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
-    const modalInstance = this;
+app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers, id, sponsor, platformLead, description) {
+    const updateModalInstance = this;
 
-    modalInstance.peers = peers;
-    modalInstance.form = {};
-    modalInstance.formError = false;
+    updateModalInstance.peers = peers;
+    updateModalInstance.form = {};
+    updateModalInstance.formError = false;
+    updateModalInstance.id = id;
+    updateModalInstance.sponsor = sponsor;
+    updateModalInstance.platformLead = platformLead;
+    updateModalInstance.description = description;
+
 
     // Validate and create Demand.
-    modalInstance.create = () => {
+    updateModalInstance.update = (id) => {
         if (invalidFormInput()) {
-            modalInstance.formError = true;
+            updateModalInstance.formError = true;
         } else {
-            modalInstance.formError = false;
+            updateModalInstance.formError = false;
 
             $uibModalInstance.close();
 
-            const createDemandEndpoint = `${apiBaseURL}create-demand?partyName=${modalInstance.form.counterparty}&description=${modalInstance.form.description}`;
+            //TODO add update call
+            let startDate = formatDate(updateModalInstance.form.startDate);
+            let endDate = formatDate(updateModalInstance.form.endDate);
+            const updateDemandEndpoint = `${apiBaseURL}update-demand?amount=${updateModalInstance.form.amount}&startDate=${startDate}&endDate=${endDate}&id=${id}`;
 
-            // Create PO and handle success / fail responses.
-            $http.post(createDemandEndpoint).then(
+            $http.put(updateDemandEndpoint).then(
                 (result) => {
-                    modalInstance.displayMessage(result);
+                    updateModalInstance.displayMessage(result);
                     demoApp.getDemands();
                 },
                 (result) => {
-                    modalInstance.displayMessage(result);
+                    updateModalInstance.displayMessage(result);
                 }
             );
         }
     };
 
-    modalInstance.displayMessage = (message) => {
+    updateModalInstance.displayMessage = (message) => {
         const modalInstanceTwo = $uibModal.open({
             templateUrl: 'messageContent.html',
             controller: 'messageCtrl',
@@ -120,12 +141,76 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
         modalInstanceTwo.result.then(() => {}, () => {});
     };
 
-    // Close create IOU modal dialogue.
-    modalInstance.cancel = () => $uibModalInstance.dismiss();
+    // Close create Demand modal dialogue.
+    updateModalInstance.cancel = () => $uibModalInstance.dismiss();
 
-    // Validate the IOU.
+    // Validate Demand Creation.
     function invalidFormInput() {
-        return (modalInstance.form.description === undefined) || (modalInstance.form.counterparty === undefined);
+        return isNaN(updateModalInstance.form.amount) || (updateModalInstance.form.startDate === undefined) || (updateModalInstance.form.endDate === undefined);
+    }
+
+    //format date
+    function formatDate(date){
+        let month = '' + (date.getMonth() + 1),
+            day = '' + date.getDate(),
+            year = date.getFullYear();
+
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+
+        return [day, month, year].join('/');
+    }
+});
+
+app.controller('ModalCreateDemandCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
+    const createModalInstance = this;
+
+    createModalInstance.peers = peers;
+    createModalInstance.form = {};
+    createModalInstance.formError = false;
+
+    // Validate and create Demand.
+    createModalInstance.create = () => {
+        if (invalidFormInput()) {
+            createModalInstance.formError = true;
+        } else {
+            createModalInstance.formError = false;
+
+            $uibModalInstance.close();
+
+            const createDemandEndpoint = `${apiBaseURL}create-demand?partyName=${createModalInstance.form.counterparty}&description=${createModalInstance.form.description}`;
+
+            // Create PO and handle success / fail responses.
+            $http.post(createDemandEndpoint).then(
+                (result) => {
+                    createModalInstance.displayMessage(result);
+                    demoApp.getDemands();
+                },
+                (result) => {
+                    createModalInstance.displayMessage(result);
+                }
+            );
+        }
+    };
+
+    createModalInstance.displayMessage = (message) => {
+        const modalInstanceTwo = $uibModal.open({
+            templateUrl: 'messageContent.html',
+            controller: 'messageCtrl',
+            controllerAs: 'modalInstanceTwo',
+            resolve: { message: () => message }
+        });
+
+        // No behaviour on close / dismiss.
+        modalInstanceTwo.result.then(() => {}, () => {});
+    };
+
+    // Close create Demand modal dialogue.
+    createModalInstance.cancel = () => $uibModalInstance.dismiss();
+
+    // Validate Demand Creation.
+    function invalidFormInput() {
+        return (createModalInstance.form.description === undefined) || (createModalInstance.form.counterparty === undefined);
     }
 });
 
