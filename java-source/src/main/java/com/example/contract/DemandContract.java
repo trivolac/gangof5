@@ -30,7 +30,7 @@ public class DemandContract implements Contract{
                         tx.getOutputs().size() == 1);
                 final DemandState out = tx.outputsOfType(DemandState.class).get(0);
                 require.using("The sponsor and platform lead cannot be the same entity.",
-                        out.getSponsor() != out.getPlatformLead());
+                        out.getLender() != out.getBorrower());
                 require.using("Sponsors and platform lead must be the only signers.",
                         command.getSigners().containsAll(out.getParticipants().stream().filter(Objects::nonNull).map(AbstractParty::getOwningKey).collect(Collectors.toList())));
                 require.using("Description must exist.",
@@ -45,7 +45,7 @@ public class DemandContract implements Contract{
                         tx.getOutputs().size() == 1);
                 final DemandState out = tx.outputsOfType(DemandState.class).get(0);
                 require.using("The sponsor and platform lead cannot be the same entity.",
-                        out.getSponsor() != out.getPlatformLead());
+                        out.getLender() != out.getBorrower());
                 require.using("All of the participants must be signers.",
                         command.getSigners().containsAll(out.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList())));
 

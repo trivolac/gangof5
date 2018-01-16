@@ -7,9 +7,11 @@ import com.example.state.IOUState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.corda.core.contracts.StateAndRef;
+import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
+import net.corda.core.messaging.FlowHandle;
 import net.corda.core.messaging.FlowProgressHandle;
 import net.corda.core.transactions.SignedTransaction;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ import javax.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -109,42 +112,35 @@ public class DemandApi {
         }
     }
 
-    @PUT
+    @GET
     @Path("update-demand")
-    public Response updateDemand(@QueryParam("description") String description, @QueryParam("partyName") CordaX500Name partyName, @QueryParam("startDate") Date startDate, @QueryParam("endDate") Date endDate, @QueryParam("amount") int amount) throws InterruptedException, ExecutionException {
-        logger.error("Starting validation");
-        if (description == null || description.isEmpty()) {
-            return Response.status(BAD_REQUEST).entity("Query parameter 'description' must exist.\n").build();
-        }
-        if (partyName == null) {
-            return Response.status(BAD_REQUEST).entity("Query parameter 'partyName' missing or has wrong format.\n").build();
-        }
+    public Response updateDemand(
+            @QueryParam(value = "id") String id,
+            @QueryParam(value = "party") String party,
+            @QueryParam("description") String description,
+            @QueryParam("partyName") CordaX500Name partyName,
+            @QueryParam("startDate") Date startDate,
+            @QueryParam("endDate") Date endDate,
+            @QueryParam("amount") int amount) {
+        final UniqueIdentifier linearId = UniqueIdentifier.Companion.fromString(id);
 
-        final Party otherParty = rpcOps.wellKnownPartyFromX500Name(partyName);
-        if (otherParty == null) {
-            return Response.status(BAD_REQUEST).entity("Party named " + partyName + "cannot be found.\n").build();
+        final Set<Party> newLenders = rpcOps.partiesFromName(party, false);
+        if (newLenders.size() != 1) {
+            final String errMsg = String.format("Found %d identities for the new lender.", newLenders.size());
+            throw new IllegalStateException(errMsg);
         }
-        logger.error("Other party :: " + otherParty);
-
-        logger.error("Starting Flow");
+        final Party newLender = newLenders.iterator().next();
 
         try {
-            FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
-                    .startTrackedFlowDynamic(DemandUpdateFlow.Initiator.class, description, otherParty);
-            flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s\n", evt));
+            final FlowHandle flowHandle = rpcOps.startFlowDynamic(
+                    DemandUpdateFlow.Initiator.class,
+                    linearId, newLender, description, startDate, endDate, amount);
 
-            // The line below blocks and waits for the flow to return.
-            final SignedTransaction result = flowHandle
-                    .getReturnValue()
-                    .get();
-
-            final String msg = String.format("Transaction id %s updated to ledger.\n", result.getId());
+            flowHandle.getReturnValue().get();
+            final String msg = String.format("Obligation %s transferred to %s.", id, party);
             return Response.status(CREATED).entity(msg).build();
-
-        } catch (Throwable ex) {
-            final String msg = ex.getMessage();
-            logger.error(ex.getMessage(), ex);
-            return Response.status(BAD_REQUEST).entity(msg).build();
+        } catch (Exception e) {
+            return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
         }
     }
 
