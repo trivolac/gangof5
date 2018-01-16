@@ -1,7 +1,9 @@
 package com.example.api;
 
 import com.example.flow.DemandCreationFlow;
+import com.example.flow.DemandUpdateFlow;
 import com.example.state.DemandState;
+import com.example.state.IOUState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.corda.core.contracts.StateAndRef;
@@ -9,6 +11,7 @@ import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.messaging.FlowProgressHandle;
+import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +19,12 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 
@@ -29,6 +34,8 @@ public class DemandApi {
     private final CordaX500Name myLegalName;
 
     private final List<String> serviceNames = ImmutableList.of("Controller", "Network Map Service");
+
+    private final String platformLeadServiceNamePrefix = "PL";
 
     static private final Logger logger = LoggerFactory.getLogger(DemandApi.class);
 
@@ -55,6 +62,24 @@ public class DemandApi {
     public List<StateAndRef<DemandState>> getDemands() {
         return rpcOps.vaultQuery(DemandState.class).getStates();
     }
+
+
+    /**
+     * Returns all parties registered with the [NetworkMapService]. These names can be used to look up identities
+     * using the [IdentityService].
+     */
+    @GET
+    @Path("platformLeads")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, List<CordaX500Name>> getPlatformLeadPeers() {
+        List<NodeInfo> nodeInfoSnapshot = rpcOps.networkMapSnapshot();
+        return ImmutableMap.of("plPeers", nodeInfoSnapshot
+                .stream()
+                .map(node -> node.getLegalIdentities().get(0).getName())
+                .filter(name -> !name.equals(myLegalName) && name.getOrganisation().startsWith(platformLeadServiceNamePrefix))
+                .collect(toList()));
+    }
+
 
     /**
      * Initiates a flow to create a Demand between two parties.
@@ -104,5 +129,51 @@ public class DemandApi {
             logger.error(ex.getMessage(), ex);
             return Response.status(BAD_REQUEST).entity(msg).build();
         }
+    }
+
+    @PUT
+    @Path("update-demand")
+    public Response updateDemand(@QueryParam("description") String description, @QueryParam("partyName") CordaX500Name partyName, @QueryParam("startDate") Date startDate, @QueryParam("endDate") Date endDate, @QueryParam("amount") int amount) throws InterruptedException, ExecutionException {
+        logger.error("Starting validation");
+        if (description == null || description.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'description' must exist.\n").build();
+        }
+        if (partyName == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'partyName' missing or has wrong format.\n").build();
+        }
+
+        final Party otherParty = rpcOps.wellKnownPartyFromX500Name(partyName);
+        if (otherParty == null) {
+            return Response.status(BAD_REQUEST).entity("Party named " + partyName + "cannot be found.\n").build();
+        }
+        logger.error("Other party :: " + otherParty);
+
+        logger.error("Starting Flow");
+
+        try {
+            FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
+                    .startTrackedFlowDynamic(DemandUpdateFlow.Initiator.class, description, otherParty);
+            flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s\n", evt));
+
+            // The line below blocks and waits for the flow to return.
+            final SignedTransaction result = flowHandle
+                    .getReturnValue()
+                    .get();
+
+            final String msg = String.format("Transaction id %s updated to ledger.\n", result.getId());
+            return Response.status(CREATED).entity(msg).build();
+
+        } catch (Throwable ex) {
+            final String msg = ex.getMessage();
+            logger.error(ex.getMessage(), ex);
+            return Response.status(BAD_REQUEST).entity(msg).build();
+        }
+    }
+
+    @GET
+    @Path("state")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<StateAndRef<DemandState>> getStates() {
+        return rpcOps.vaultQuery(DemandState.class).getStates();
     }
 }

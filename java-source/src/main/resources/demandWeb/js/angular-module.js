@@ -96,6 +96,7 @@ app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalIns
     modalInstance.platformLead = platformLead;
     modalInstance.description = description;
 
+
     // Validate and create Demand.
     modalInstance.update = () => {
         if (invalidFormInput()) {

@@ -38,7 +38,7 @@ public class DemandState implements LinearState, QueryableState {
         this.linearId = new UniqueIdentifier();
     }
 
-    public DemandState(String description, Integer amount, Date startDate, Date endDate, Party sponsor, Party platformLead, List<Party> approvalParties) {
+    public DemandState(String description, Party sponsor, Party platformLead, List<Party> approvalParties, Integer amount, Date startDate, Date endDate) {
         this.description = description;
         this.amount = amount;
         this.startDate = startDate;
