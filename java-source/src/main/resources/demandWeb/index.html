@@ -46,16 +46,16 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     <form>
         <div class="modal-body">
             <div class="form-group">
-                <label for="counterparty" class="control-label">Counter-party:</label>
-                <select ng-model="modalInstance.form.counterparty" class="form-control" id="counterparty"
-                        ng-options="peer as peer for peer in modalInstance.peers">
+                <label for="counterparty" class="control-label">Platform Lead:</label>
+                <select ng-model="createModalInstance.form.counterparty" class="form-control" id="counterparty"
+                        ng-options="peer as peer for peer in createModalInstance.peers">
                 </select>
             </div>
             <div class="form-group">
                 <label for="description" class="control-label">Description:</label>
-                <input type="text" ng-model="modalInstance.form.description" class="form-control" id="description">
+                <input type="text" ng-model="createModalInstance.form.description" class="form-control" id="description">
             </div>
-            <div ng-show="modalInstance.formError" class="form-group">
+            <div ng-show="createModalInstance.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
                     <span class="sr-only">Error:</span>
@@ -64,8 +64,8 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
             </div>
         </div>
         <div class="modal-footer">
-            <button ng-click="modalInstance.cancel()" type="button" class="btn btn-default">Close</button>
-            <button ng-click="modalInstance.create()" type="button" class="btn btn-primary">Create Demand</button>
+            <button ng-click="createModalInstance.cancel()" type="button" class="btn btn-default">Close</button>
+            <button ng-click="createModalInstance.create()" type="button" class="btn btn-primary">Create Demand</button>
         </div>
     </form>
 </script>
@@ -77,15 +77,31 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     <form>
         <div class="modal-body">
             <div class="form-group">
+                <label for="id" class="control-label">ID:</label>
+                <input type="text" class="form-control" id="id" value={{modalInstance.id}} disabled>
+            </div>
+            <div class="form-group">
+                <label for="sponsor" class="control-label">Sponsor:</label>
+                <input type="text" class="form-control" id="sponsor" value={{modalInstance.sponsor}} disabled>
+            </div>
+            <div class="form-group">
+                <label for="platformLead" class="control-label">Platform Lead:</label>
+                <input type="text" class="form-control" id="platformLead" value={{modalInstance.platformLead}} disabled>
+            </div>
+            <div class="form-group">
+                <label for="descriptionForUpdate" class="control-label">Description:</label>
+                <input type="text" class="form-control" id="descriptionForUpdate" value={{modalInstance.description}} disabled>
+            </div>
+            <div class="form-group">
                 <label for="amount" class="control-label">Amount (Int):</label>
                 <input type="text" ng-model="modalInstance.form.amount" class="form-control" id="amount">
             </div>
             <div class="form-group">
-                <label for="startDate" class="control-label">Value (Int):</label>
+                <label for="startDate" class="control-label">Start Date:</label>
                 <input type="date" ng-model="modalInstance.form.startDate" class="form-control" id="startDate">
             </div>
             <div class="form-group">
-                <label for="endDate" class="control-label">Value (Int):</label>
+                <label for="endDate" class="control-label">End Date:</label>
                 <input type="date" ng-model="modalInstance.form.endDate" class="form-control" id="endDate">
             </div>
             <div ng-show="modalInstance.formError" class="form-group">
@@ -97,8 +113,8 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-default">Close</button>
-            <button type="button" class="btn btn-primary">Submit For Approval</button>
+            <button ng-click="modalInstance.cancel()" type="button" class="btn btn-default">Close</button>
+            <button ng-click="modalInstance.update()" type="button" class="btn btn-success">Submit For Approval</button>
         </div>
     </form>
 </script>
@@ -111,18 +127,19 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
 
 <div class="row">
     <div class="col-md-1"></div>
-    <div class="col-md-10">
-        <div ng-show="!demoApp.demands.length" class="panel panel-primary">
+    <div class="col-md-5">
+        <div class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">There are no recorded Demands</h3>
+                <h3 class="panel-title">Demands:</h3>
             </div>
-            <div class="panel-body">Use the "Create Demand" button to send a new Demand to a peer.</div>
-        </div>
-        <div ng-show="demoApp.demands.length" class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">Recorded Demands:</h3>
+
+            <div ng-show="!demoApp.demands.length">
+                <div class="panel-body">
+                    <p>There are no recorded Demands. Use the "Create Demand" button to send a new Demand to a peer.</p>
+                </div>
             </div>
         </div>
+
         <div ng-repeat="demand in demoApp.demands" class="panel panel-default">
             <div class="panel-body">
                 <table>
@@ -159,9 +176,49 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td>{{demand.approvalParties.length === 0 ? '' : demand.approvalParties}}</td>
                     </tr>
                 </table>
-                <div class="control-group"></div>
+                <br/>
                 <div class="float-right">
-                    <button ng-click="demoApp.openUpdateDemandModal()" type="button" class="btn btn-primary">Update Demand Estimates</button>
+                    <button ng-click="demoApp.openUpdateDemandModal(demand)" type="button" class="btn btn-default">Update Demand Estimates</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Projects:</h3>
+            </div>
+
+            <div ng-show="!demoApp.projects.length">
+                <div class="panel-body">
+                    <p>There are no recorded Projects.</p>
+                </div>
+            </div>
+        </div>
+
+        <div ng-repeat="project in demoApp.projects" class="panel panel-default">
+            <div class="panel-body">
+                <table>
+                    <tr>
+                        <td>ID: </td>
+                        <td>{{project.linearId.id}}</td>
+                    </tr>
+                    <tr>
+                        <td>Sponsor: </td>
+                        <td>{{project.sponsor}}</td>
+                    </tr>
+                    <tr>
+                        <td>Platform Lead: </td>
+                        <td>{{project.platformLead}}</td>
+                    </tr>
+                    <tr>
+                        <td>Description: </td>
+                        <td>{{project.description}}</td>
+                    </tr>
+                </table>
+                <br/>
+                <div class="float-right">
+                    <button type="button" class="btn btn-default">Button</button>
                 </div>
             </div>
         </div>

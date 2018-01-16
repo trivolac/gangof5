@@ -29,35 +29,43 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     // We identify the node.
     const apiBaseURL = "/api/demand/";
     let peers = [];
+    let platformLeads = [];
 
     $http.get(apiBaseURL + "me").then((response) => demoApp.thisNode = response.data.me);
 
     $http.get("/api/example/peers").then((response) => peers = response.data.peers);
 
+    $http.get("/api/demand/platformLeads").then((response) => platformLeads = response.data.plPeers);
+    demoApp.plResponse = platformLeads;
+
     demoApp.openCreateDemandModal = () => {
         const modalInstance = $uibModal.open({
             templateUrl: 'createDemandModal.html',
-            controller: 'ModalInstanceCtrl',
-            controllerAs: 'modalInstance',
+            controller: 'ModalCreateDemandCtrl',
+            controllerAs: 'createModalInstance',
             resolve: {
                 demoApp: () => demoApp,
                 apiBaseURL: () => apiBaseURL,
-                peers: () => peers
+                peers: () => platformLeads
             }
         });
 
         modalInstance.result.then(() => {}, () => {});
     };
 
-    demoApp.openUpdateDemandModal = () => {
+    demoApp.openUpdateDemandModal = (demand) => {
         const modalInstance = $uibModal.open({
             templateUrl: 'updateDemandModal.html',
-            controller: 'ModalInstanceCtrl',
+            controller: 'ModalUpdateDemandCtrl',
             controllerAs: 'modalInstance',
             resolve: {
                 demoApp: () => demoApp,
                 apiBaseURL: () => apiBaseURL,
-                peers: () => peers
+                peers: () => peers,
+                id: () => demand.linearId.id,
+                sponsor: () => demand.sponsor,
+                platformLead: () => demand.platformLead,
+                description: () => demand.description,
             }
         });
 
@@ -77,15 +85,19 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     }, 5000);
 });
 
-app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
+app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers, id, sponsor, platformLead, description) {
     const modalInstance = this;
 
     modalInstance.peers = peers;
     modalInstance.form = {};
     modalInstance.formError = false;
+    modalInstance.id = id;
+    modalInstance.sponsor = sponsor;
+    modalInstance.platformLead = platformLead;
+    modalInstance.description = description;
 
     // Validate and create Demand.
-    modalInstance.create = () => {
+    modalInstance.update = () => {
         if (invalidFormInput()) {
             modalInstance.formError = true;
         } else {
@@ -93,18 +105,7 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
 
             $uibModalInstance.close();
 
-            const createDemandEndpoint = `${apiBaseURL}create-demand?partyName=${modalInstance.form.counterparty}&description=${modalInstance.form.description}`;
-
-            // Create PO and handle success / fail responses.
-            $http.post(createDemandEndpoint).then(
-                (result) => {
-                    modalInstance.displayMessage(result);
-                    demoApp.getDemands();
-                },
-                (result) => {
-                    modalInstance.displayMessage(result);
-                }
-            );
+            //TODO add update call
         }
     };
 
@@ -120,12 +121,64 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
         modalInstanceTwo.result.then(() => {}, () => {});
     };
 
-    // Close create IOU modal dialogue.
+    // Close create Demand modal dialogue.
     modalInstance.cancel = () => $uibModalInstance.dismiss();
 
-    // Validate the IOU.
+    // Validate Demand Creation.
     function invalidFormInput() {
-        return (modalInstance.form.description === undefined) || (modalInstance.form.counterparty === undefined);
+        return isNaN(modalInstance.form.amount) || (modalInstance.form.startDate === undefined) || (modalInstance.form.endDate === undefined);
+    }
+});
+
+app.controller('ModalCreateDemandCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
+    const createModalInstance = this;
+
+    createModalInstance.peers = peers;
+    createModalInstance.form = {};
+    createModalInstance.formError = false;
+
+    // Validate and create Demand.
+    createModalInstance.create = () => {
+        if (invalidFormInput()) {
+            createModalInstance.formError = true;
+        } else {
+            createModalInstance.formError = false;
+
+            $uibModalInstance.close();
+
+            const createDemandEndpoint = `${apiBaseURL}create-demand?partyName=${createModalInstance.form.counterparty}&description=${createModalInstance.form.description}`;
+
+            // Create PO and handle success / fail responses.
+            $http.post(createDemandEndpoint).then(
+                (result) => {
+                    createModalInstance.displayMessage(result);
+                    demoApp.getDemands();
+                },
+                (result) => {
+                    createModalInstance.displayMessage(result);
+                }
+            );
+        }
+    };
+
+    createModalInstance.displayMessage = (message) => {
+        const modalInstanceTwo = $uibModal.open({
+            templateUrl: 'messageContent.html',
+            controller: 'messageCtrl',
+            controllerAs: 'modalInstanceTwo',
+            resolve: { message: () => message }
+        });
+
+        // No behaviour on close / dismiss.
+        modalInstanceTwo.result.then(() => {}, () => {});
+    };
+
+    // Close create Demand modal dialogue.
+    createModalInstance.cancel = () => $uibModalInstance.dismiss();
+
+    // Validate Demand Creation.
+    function invalidFormInput() {
+        return (createModalInstance.form.description === undefined) || (createModalInstance.form.counterparty === undefined);
     }
 });
 
