@@ -112,12 +112,11 @@ app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalIns
 
             $uibModalInstance.close();
 
-            //TODO add update call
             let startDate = formatDate(updateModalInstance.form.startDate);
             let endDate = formatDate(updateModalInstance.form.endDate);
             const updateDemandEndpoint = `${apiBaseURL}update-demand?amount=${updateModalInstance.form.amount}&startDate=${startDate}&endDate=${endDate}&id=${id}`;
 
-            $http.put(updateDemandEndpoint).then(
+            $http.post(updateDemandEndpoint).then(
                 (result) => {
                     updateModalInstance.displayMessage(result);
                     demoApp.getDemands();
