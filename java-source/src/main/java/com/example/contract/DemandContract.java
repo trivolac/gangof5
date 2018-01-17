@@ -35,6 +35,14 @@ public class DemandContract implements Contract{
                         command.getSigners().containsAll(out.getParticipants().stream().filter(Objects::nonNull).map(AbstractParty::getOwningKey).collect(Collectors.toList())));
                 require.using("Description must exist.",
                         !out.getDescription().isEmpty());
+                require.using("Sponsor must exist.",
+                        out.getLender() != null);
+                require.using("Platform Lead must exist.",
+                        out.getBorrower() != null);
+                require.using("Amount must be 0.",
+                        out.getAmount() == 0);
+                require.using("No approval parties must exist.",
+                        out.getApprovalParties() != null && out.getApprovalParties().isEmpty());
                 return null;
             });
         }else if(command.getValue() instanceof Commands.Update){
@@ -44,18 +52,38 @@ public class DemandContract implements Contract{
                 require.using("Only one output state should be created.",
                         tx.getOutputs().size() == 1);
                 final DemandState out = tx.outputsOfType(DemandState.class).get(0);
+                final DemandState in = tx.inputsOfType(DemandState.class).get(0);
                 require.using("The sponsor and platform lead cannot be the same entity.",
                         out.getLender() != out.getBorrower());
                 require.using("All of the participants must be signers.",
                         command.getSigners().containsAll(out.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList())));
 
-                // IOU-specific constraints.
+                // Demand-specific constraints.
                 require.using("The demand's amount must be non-negative.",
                         out.getAmount() > 0);
+                require.using("Description must exist.",
+                        !out.getDescription().isEmpty());
+                require.using("Sponsor must exist.",
+                        out.getLender() != null);
+                require.using("Platform Lead must exist.",
+                        out.getBorrower() != null);
+                require.using("Approval parties must exist.",
+                        out.getApprovalParties() != null && !out.getApprovalParties().isEmpty());
+                require.using("Start date must exist.",
+                        out.getStartDate() != null);
+                require.using("End date must exist.",
+                        out.getEndDate() != null);
+
 
                 require.using("The startDate should not be lesser than current date.", isCurrentDateOrGrtr(out.getStartDate()));
+                require.using("The startDate should not be lesser than end date.", out.getStartDate().before(out.getEndDate()));
 
-                //require.using("The endDate should not be greater than 6 months.", );
+                require.using("Description of Input and Output should be the same.",
+                        out.getDescription().equals(in.getDescription()));
+                require.using("Platform Lead of Input and Output should be the same.",
+                        out.getBorrower() == in.getBorrower());
+                require.using("Sponsor of Input and Output should be the same.",
+                        out.getLender() == in.getLender());
 
                 return null;
             });
