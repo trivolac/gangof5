@@ -23,8 +23,8 @@ public class ProjectState implements LinearState, QueryableState {
     private final int budget;
     private final String startDate;
     private final String endDate;
-    private final Party sponsor;
-    private final Party platformLead;
+    private final Party lender;
+    private final Party borrower;
     private final Party cio;
     private final Party coo;
     private final Party deliveryTeam;
@@ -37,8 +37,8 @@ public class ProjectState implements LinearState, QueryableState {
         this.budget = budget;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.sponsor = sponsor;
-        this.platformLead = platformLead;
+        this.lender = sponsor;
+        this.borrower = platformLead;
         this.cio = cio;
         this.coo = coo;
         this.deliveryTeam = deliveryTeam;
@@ -52,8 +52,8 @@ public class ProjectState implements LinearState, QueryableState {
         this.budget = budget;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.sponsor = sponsor;
-        this.platformLead = platformLead;
+        this.lender = sponsor;
+        this.borrower = platformLead;
         this.cio = cio;
         this.coo = coo;
         this.deliveryTeam = deliveryTeam;
@@ -84,12 +84,12 @@ public class ProjectState implements LinearState, QueryableState {
         return endDate;
     }
 
-    public Party getSponsor() {
-        return sponsor;
+    public Party getLender() {
+        return lender;
     }
 
-    public Party getPlatformLead() {
-        return platformLead;
+    public Party getBorrower() {
+        return borrower;
     }
 
     public Party getCio() {
@@ -122,7 +122,7 @@ public class ProjectState implements LinearState, QueryableState {
         if(schema instanceof ProjectSchemaV1){
             UUID uuid = (this.linearId == null) ? null : this.linearId.getId();
 
-            return new ProjectSchemaV1.PersistentProject(this.projectCode, this.allocationKey, this.description, this.budget, this.startDate, this.endDate, this.sponsor.toString(), this.platformLead.toString(), this.cio.toString(), this.coo.toString(), this.deliveryTeam.toString(), uuid);
+            return new ProjectSchemaV1.PersistentProject(this.projectCode, this.allocationKey, this.description, this.budget, this.startDate, this.endDate, this.lender.toString(), this.borrower.toString(), this.cio.toString(), this.coo.toString(), this.deliveryTeam.toString(), uuid);
         }else{
             throw new IllegalArgumentException("Unrecognised schema $schema");
         }
@@ -131,7 +131,7 @@ public class ProjectState implements LinearState, QueryableState {
     @NotNull
     @Override
     public List<AbstractParty> getParticipants() {
-        return Arrays.asList(platformLead, sponsor, cio, coo, deliveryTeam);
+        return Arrays.asList(lender, borrower, cio, coo, deliveryTeam);
     }
 }
 

@@ -71,8 +71,8 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
                 apiBaseURL: () => apiBaseURL,
                 peers: () => peers,
                 id: () => demand.linearId.id,
-                sponsor: () => demand.sponsor,
-                platformLead: () => demand.platformLead,
+                lender: () => demand.lender,
+                borrower: () => demand.borrower,
                 description: () => demand.description,
             }
         });
@@ -101,15 +101,15 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     }, 5000);
 });
 
-app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers, id, sponsor, platformLead, description) {
+app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers, id, lender, borrower, description) {
     const updateModalInstance = this;
 
     updateModalInstance.peers = peers;
     updateModalInstance.form = {};
     updateModalInstance.formError = false;
     updateModalInstance.id = id;
-    updateModalInstance.sponsor = sponsor;
-    updateModalInstance.platformLead = platformLead;
+    updateModalInstance.lender = lender;
+    updateModalInstance.borrower = borrower;
     updateModalInstance.description = description;
 
 
