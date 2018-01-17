@@ -20,15 +20,15 @@ public class ProjectContract implements Contract {
 
     @Override
     public void verify(LedgerTransaction tx) throws IllegalArgumentException {
-        final CommandWithParties<DemandContract.Commands> command = requireSingleCommand(tx.getCommands(), DemandContract.Commands.class);
+        final CommandWithParties<ProjectContract.Commands> command = requireSingleCommand(tx.getCommands(), ProjectContract.Commands.class);
 
-        if(command.getValue() instanceof DemandContract.Commands.Create){
+        if(command.getValue() instanceof ProjectContract.Commands.Create){
             requireThat(require -> {
                 require.using("Only one input state should be consumed when creating a project.",
                         tx.getInputs().size() == 1);
                 require.using("Only one output state should be created.",
-                        tx.getOutputs().size() == 1);
-                final ProjectState out = tx.outputsOfType(ProjectState.class).get(0);
+                        tx.getOutputs().size() == 2);
+              /*  final ProjectState out = tx.outputsOfType(ProjectState.class).get(0);
                 final DemandState in = tx.inputsOfType(DemandState.class).get(0);
                 require.using("Sponsor must exist.",
                         out.getSponsor() != null);
@@ -71,7 +71,7 @@ public class ProjectContract implements Contract {
                         out.getStartDate() == in.getStartDate());
                 require.using("Input end date must be equal to output end date",
                         out.getEndDate() == in.getEndDate());
-
+*/
                 return null;
             });
         }else{
