@@ -21,6 +21,9 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Path("demand")
 public class DemandApi {
@@ -134,35 +138,69 @@ public class DemandApi {
         }
     }
 
-    @GET
+    @POST
     @Path("update-demand")
     public Response updateDemand(
-            @QueryParam(value = "id") String id,
-            @QueryParam(value = "party") String party,
-            @QueryParam("description") String description,
-            @QueryParam("partyName") CordaX500Name partyName,
-            @QueryParam("startDate") Date startDate,
-            @QueryParam("endDate") Date endDate,
-            @QueryParam("amount") int amount) {
-        final UniqueIdentifier linearId = UniqueIdentifier.Companion.fromString(id);
-
-        final Set<Party> newLenders = rpcOps.partiesFromName(party, false);
-        if (newLenders.size() != 1) {
-            final String errMsg = String.format("Found %d identities for the new lender.", newLenders.size());
-            throw new IllegalStateException(errMsg);
+            @QueryParam("amount") String amount,
+            @QueryParam("startDate") String startDate,
+            @QueryParam("endDate") String endDate,
+            @QueryParam(value = "id") String id
+           ) {
+        int amt = Integer.parseInt(amount);
+        logger.error("Starting validation");
+        if (amt  < 0 ) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'Budget Amount' must be greater than zero.\n").build();
         }
-        final Party newLender = newLenders.iterator().next();
+        if (startDate == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
+        }
+        if (endDate == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
+        }
+
+        Date startDateObj = null;
+        Date endDateObj = null;
+        DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
 
         try {
-            final FlowHandle flowHandle = rpcOps.startFlowDynamic(
-                    DemandUpdateFlow.Initiator.class,
-                    linearId, newLender, description, startDate, endDate, amount);
+            startDateObj = df.parse(startDate);
+        } catch (ParseException e) {
+            logger.error("ParseException for startDate", e);
+            return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' has wrong format (dd/MM/yyyy)).\n").build();
+        }
+
+        try {
+            endDateObj = df.parse(endDate);
+        } catch (ParseException e) {
+            logger.error("ParseException for startDate", e);
+            return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' has wrong format (dd/MM/yyyy)).\n").build();
+        }
+
+
+        UniqueIdentifier linearId = UniqueIdentifier.Companion.fromString(id);
+
+
+        logger.error("Starting Flow");
+
+
+
+        try {
+            FlowHandle flowHandle = rpcOps
+                    .startFlowDynamic(DemandUpdateFlow.Initiator.class, linearId, startDate, endDate, amt);
+            //flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s\n", evt));
 
             flowHandle.getReturnValue().get();
-            final String msg = String.format("Obligation %s transferred to %s.", id, party);
+
+            // The line below blocks and waits for the flow to return.
+            flowHandle.getReturnValue().get();
+
+            final String msg = String.format("Transaction id %s with amount [%s] & startDate[%s] & endDate[%s] is updated to ledger.\n", id, amount, startDate, endDate);
             return Response.status(CREATED).entity(msg).build();
-        } catch (Exception e) {
-            return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
+
+        } catch (Throwable ex) {
+            final String msg = ex.getMessage();
+            logger.error(ex.getMessage(), ex);
+            return Response.status(BAD_REQUEST).entity(msg).build();
         }
     }
 

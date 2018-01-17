@@ -7,8 +7,8 @@ import net.corda.core.contracts.Contract;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.transactions.LedgerTransaction;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+/*import java.text.SimpleDateFormat;
+import java.util.Date;*/
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -46,47 +46,48 @@ public class DemandContract implements Contract{
                 return null;
             });
         }else if(command.getValue() instanceof Commands.Update){
-            requireThat(require -> {
-                require.using("1 input should be consumed when updating a command",
-                        tx.getInputs().size() == 1);
-                require.using("Only one output state should be created.",
-                        tx.getOutputs().size() == 1);
-                final DemandState out = tx.outputsOfType(DemandState.class).get(0);
-                final DemandState in = tx.inputsOfType(DemandState.class).get(0);
-                require.using("The sponsor and platform lead cannot be the same entity.",
-                        out.getLender() != out.getBorrower());
-                require.using("All of the participants must be signers.",
-                        command.getSigners().containsAll(out.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList())));
 
-                // Demand-specific constraints.
-                require.using("The demand's amount must be non-negative.",
-                        out.getAmount() > 0);
-                require.using("Description must exist.",
-                        !out.getDescription().isEmpty());
-                require.using("Sponsor must exist.",
-                        out.getLender() != null);
-                require.using("Platform Lead must exist.",
-                        out.getBorrower() != null);
-                require.using("Approval parties must exist.",
-                        out.getApprovalParties() != null && !out.getApprovalParties().isEmpty());
-                require.using("Start date must exist.",
-                        out.getStartDate() != null);
-                require.using("End date must exist.",
-                        out.getEndDate() != null);
+                requireThat(require -> {
+                   /* require.using("1 input should be consumed when updating a command",
+                            tx.getInputs().size() == 1);
+                    require.using("Only one output state should be created.",
+                            tx.getOutputs().size() == 1);
+                    final DemandState out = tx.outputsOfType(DemandState.class).get(0);
+                    final DemandState in = tx.inputsOfType(DemandState.class).get(0);
+                    require.using("The sponsor and platform lead cannot be the same entity.",
+                            out.getLender() != out.getBorrower());
+                    require.using("All of the participants must be signers.",
+                            command.getSigners().containsAll(out.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList())));
+
+                    // Demand-specific constraints.
+                    require.using("The demand's amount must be non-negative.",
+                            out.getAmount() > 0);
+                    require.using("Description must exist.",
+                            !out.getDescription().isEmpty());
+                    require.using("Sponsor must exist.",
+                            out.getLender() != null);
+                    require.using("Platform Lead must exist.",
+                            out.getBorrower() != null);
+                    require.using("Approval parties must exist.",
+                            out.getApprovalParties() != null && !out.getApprovalParties().isEmpty());
+                    require.using("Start date must exist.",
+                            out.getStartDate() != null);
+                    require.using("End date must exist.",
+                            out.getEndDate() != null);
 
 
-                require.using("The startDate should not be lesser than current date.", isCurrentDateOrGrtr(out.getStartDate()));
-                require.using("The startDate should not be lesser than end date.", out.getStartDate().before(out.getEndDate()));
+                *//*require.using("The startDate should not be lesser than current date.", out.getStartDate().after());
+                require.using("The startDate should not be lesser than end date.", out.getStartDate().before(out.getEndDate()));*//*
+                    require.using("Description of Input and Output should be the same.",
+                            out.getDescription().equals(in.getDescription()));
+                    require.using("Platform Lead of Input and Output should be the same.",
+                            out.getBorrower() == in.getBorrower());
+                    require.using("Sponsor of Input and Output should be the same.",
+                            out.getLender() == in.getLender());*/
 
-                require.using("Description of Input and Output should be the same.",
-                        out.getDescription().equals(in.getDescription()));
-                require.using("Platform Lead of Input and Output should be the same.",
-                        out.getBorrower() == in.getBorrower());
-                require.using("Sponsor of Input and Output should be the same.",
-                        out.getLender() == in.getLender());
+                    return null;
+                });
 
-                return null;
-            });
         }else if(command.getValue() instanceof Commands.Approve){
             requireThat(require -> {
                 require.using("1 input should be consumed when approving a command",
@@ -101,13 +102,13 @@ public class DemandContract implements Contract{
         }
     }
 
-    private boolean isCurrentDateOrGrtr(Date startDate){
+    /*private boolean isCurrentDateOrGrtr(Date startDate){
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date date = new Date();
         if (startDate.after(date) || sdf.format(date).equals(sdf.format(startDate)))
             return true;
         return false;
-    }
+    }*/
 
     public interface Commands extends CommandData {
         class Create implements Commands{}

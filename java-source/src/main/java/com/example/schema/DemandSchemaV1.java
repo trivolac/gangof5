@@ -22,15 +22,15 @@ public class DemandSchemaV1 extends MappedSchema {
     public static class PersistentDemand extends PersistentState {
         @Column(name = "description") private final String description;
         @Column(name = "amount") private final int amount;
-        @Column(name = "startDate") private final Date startDate;
-        @Column(name = "endDate") private final Date endDate;
+        @Column(name = "startDate") private final String startDate;
+        @Column(name = "endDate") private final String endDate;
         @Column(name = "sponsor") private final String sponsor;
         @Column(name = "platformLead") private final String platformLead;
         @Column(name = "approvalParties") @ElementCollection
         private final List<String> approvalParties;
         @Column(name = "linearId") private final UUID linearId;
 
-        public PersistentDemand(String description, int amount, Date startDate, Date endDate, String sponsor, String platformLead, List<String> approvalParties, UUID linearId){
+        public PersistentDemand(String description, int amount, String startDate, String endDate, String sponsor, String platformLead, List<String> approvalParties, UUID linearId){
             this.description = description;
             this.amount = amount;
             this.startDate = startDate;
@@ -49,11 +49,11 @@ public class DemandSchemaV1 extends MappedSchema {
             return amount;
         }
 
-        public Date getStartDate() {
+        public String getStartDate() {
             return startDate;
         }
 
-        public Date getEndDate() {
+        public String getEndDate() {
             return endDate;
         }
 

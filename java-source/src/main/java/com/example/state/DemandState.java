@@ -9,6 +9,7 @@ import net.corda.core.identity.Party;
 import net.corda.core.schemas.MappedSchema;
 import net.corda.core.schemas.PersistentState;
 import net.corda.core.schemas.QueryableState;
+import net.corda.core.serialization.CordaSerializable;
 import org.jetbrains.annotations.NotNull;
 
 import java.security.PublicKey;
@@ -18,11 +19,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@CordaSerializable
 public class DemandState implements LinearState, QueryableState {
     private final String description;
     private final Integer amount;
-    private final Date startDate;
-    private final Date endDate;
+    private final String startDate;
+    private final String endDate;
     private final Party lender;
     private final Party borrower;
     private final List<Party> approvalParties;
@@ -39,15 +41,16 @@ public class DemandState implements LinearState, QueryableState {
         this.linearId = new UniqueIdentifier();
     }
 
-    public DemandState(String description, Party lender, Party borrower, Integer amount, Date startDate, Date endDate) {
+    public DemandState(String description, Party lender, Party borrower,
+                       Integer amount, String startDate, String endDate, List<Party> participantList, UniqueIdentifier linearId) {
         this.description = description;
         this.amount = amount;
         this.startDate = startDate;
         this.endDate = endDate;
         this.lender = lender;
         this.borrower = borrower;
-        this.approvalParties = null;
-        linearId = new UniqueIdentifier();
+        this.approvalParties = participantList;
+        this.linearId = linearId;
     }
 
     public String getDescription() {
@@ -58,11 +61,11 @@ public class DemandState implements LinearState, QueryableState {
         return amount;
     }
 
-    public Date getStartDate() {
+    public String getStartDate() {
         return startDate;
     }
 
-    public Date getEndDate() {
+    public String getEndDate() {
         return endDate;
     }
 
@@ -114,8 +117,9 @@ public class DemandState implements LinearState, QueryableState {
         return getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList());
     }
 
-    public DemandState updateState(String description, Party lender, Party borrower, Integer amount, Date startDate, Date endDate){
-        return new DemandState(description, lender, borrower, amount, startDate, endDate);
+    public DemandState updateState(Integer amount, String startDate, String endDate, List<Party> participentList, UniqueIdentifier linearId){
+        participentList.addAll(this.getApprovalParties());
+        return new DemandState(this.description, this.lender, this.borrower, amount, startDate, endDate, participentList, linearId);
     }
 
     @NotNull
