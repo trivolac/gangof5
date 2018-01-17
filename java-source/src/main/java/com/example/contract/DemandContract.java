@@ -84,6 +84,8 @@ public class DemandContract implements Contract{
                         out.getBorrower() == in.getBorrower());
                 require.using("Sponsor of Input and Output should be the same.",
                         out.getLender() == in.getLender());
+                require.using("Linear Id of Input and Output should be the same.",
+                        out.getLinearId() == in.getLinearId());
 
                 return null;
             });
