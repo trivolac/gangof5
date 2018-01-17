@@ -28,6 +28,8 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
 
     // We identify the node.
     const apiBaseURL = "/api/demand/";
+    const apiProjBaseUrl = "/api/project/";
+
     let peers = [];
     let platformLeads = [];
 
@@ -83,11 +85,19 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
             .map((key) => response.data[key].state.data)
             .reverse());
 
+    demoApp.getProjects = () => $http.get("/api/project/")
+        .then((response) => demoApp.projects = Object.keys(response.data)
+            .map((key) => response.data[key].state.data)
+            .reverse());
+
+
     demoApp.getDemands();
+    demoApp.getProjects();
 
     //refresh every 5s
     setInterval(function(){
         demoApp.getDemands();
+        demoApp.getProjects();
     }, 5000);
 });
 
@@ -120,6 +130,7 @@ app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalIns
                 (result) => {
                     updateModalInstance.displayMessage(result);
                     demoApp.getDemands();
+                    demoApp.getProjects();
                 },
                 (result) => {
                     updateModalInstance.displayMessage(result);
@@ -184,6 +195,7 @@ app.controller('ModalCreateDemandCtrl', function ($http, $location, $uibModalIns
                 (result) => {
                     createModalInstance.displayMessage(result);
                     demoApp.getDemands();
+                    demoApp.getProjects();
                 },
                 (result) => {
                     createModalInstance.displayMessage(result);
