@@ -21,8 +21,8 @@ public class ProjectState implements LinearState, QueryableState {
     private final String allocationKey;
     private final String description;
     private final int budget;
-    private final Date startDate;
-    private final Date endDate;
+    private final String startDate;
+    private final String endDate;
     private final Party sponsor;
     private final Party platformLead;
     private final Party cio;
@@ -30,7 +30,7 @@ public class ProjectState implements LinearState, QueryableState {
     private final Party deliveryTeam;
     private final UniqueIdentifier linearId;
 
-    public ProjectState(String projectCode, String allocationKey, String description, int budget, Date startDate, Date endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam) {
+    public ProjectState(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam) {
         this.projectCode = projectCode;
         this.allocationKey = allocationKey;
         this.description = description;
@@ -45,7 +45,7 @@ public class ProjectState implements LinearState, QueryableState {
         this.linearId = new UniqueIdentifier();
     }
 
-    public ProjectState(String projectCode, String allocationKey, String description, int budget, Date startDate, Date endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, UniqueIdentifier linearId) {
+    public ProjectState(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, UniqueIdentifier linearId) {
         this.projectCode = projectCode;
         this.allocationKey = allocationKey;
         this.description = description;
@@ -76,11 +76,11 @@ public class ProjectState implements LinearState, QueryableState {
         return budget;
     }
 
-    public Date getStartDate() {
+    public String getStartDate() {
         return startDate;
     }
 
-    public Date getEndDate() {
+    public String getEndDate() {
         return endDate;
     }
 

@@ -24,8 +24,8 @@ public class ProjectSchemaV1 extends MappedSchema {
         @Column(name = "allocationKey") private final String allocationKey;
         @Column(name = "description") private final String description;
         @Column(name = "budget") private final int budget;
-        @Column(name = "startDate") private final Date startDate;
-        @Column(name = "endDate") private final Date endDate;
+        @Column(name = "startDate") private final String startDate;
+        @Column(name = "endDate") private final String endDate;
         @Column(name = "sponsor") private final String sponsor;
         @Column(name = "platformLead") private final String platformLead;
         @Column(name = "cio") private final String cio;
@@ -33,7 +33,7 @@ public class ProjectSchemaV1 extends MappedSchema {
         @Column(name = "deliveryTeam") private final String deliveryTeam;
         @Column(name = "linearId") private final UUID linearId;
 
-        public PersistentProject(String projectCode, String allocationKey, String description, int budget, Date startDate, Date endDate, String sponsor, String platformLead, String cio, String coo, String deliveryTeam, UUID linearId) {
+        public PersistentProject(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, String sponsor, String platformLead, String cio, String coo, String deliveryTeam, UUID linearId) {
             this.projectCode = projectCode;
             this.allocationKey = allocationKey;
             this.description = description;
@@ -64,11 +64,11 @@ public class ProjectSchemaV1 extends MappedSchema {
             return budget;
         }
 
-        public Date getStartDate() {
+        public String getStartDate() {
             return startDate;
         }
 
-        public Date getEndDate() {
+        public String getEndDate() {
             return endDate;
         }
 
