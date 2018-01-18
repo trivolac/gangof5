@@ -48,11 +48,11 @@ public class DemandContract implements Contract{
         }else if(command.getValue() instanceof Commands.Update){
 
                 requireThat(require -> {
-                   /* require.using("1 input should be consumed when updating a command",
+                    require.using("1 input should be consumed when updating a command",
                             tx.getInputs().size() == 1);
-                    require.using("Only one output state should be created.",
-                            tx.getOutputs().size() == 1);
-                    final DemandState out = tx.outputsOfType(DemandState.class).get(0);
+                /*    require.using("Only one output state should be created.",
+                            tx.getOutputs().size() == 2);*/
+                  /*  final DemandState out = tx.outputsOfType(DemandState.class).get(0);
                     final DemandState in = tx.inputsOfType(DemandState.class).get(0);
                     require.using("The sponsor and platform lead cannot be the same entity.",
                             out.getLender() != out.getBorrower());
@@ -73,10 +73,10 @@ public class DemandContract implements Contract{
                     require.using("Start date must exist.",
                             out.getStartDate() != null);
                     require.using("End date must exist.",
-                            out.getEndDate() != null);
+                            out.getEndDate() != null);*/
 
 
-                *//*require.using("The startDate should not be lesser than current date.", out.getStartDate().after());
+                /*require.using("The startDate should not be lesser than current date.", out.getStartDate().after());
                 require.using("The startDate should not be lesser than end date.", out.getStartDate().before(out.getEndDate()));*//*
                     require.using("Description of Input and Output should be the same.",
                             out.getDescription().equals(in.getDescription()));

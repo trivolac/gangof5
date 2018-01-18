@@ -28,20 +28,16 @@ public class ProjectContract implements Contract {
                         tx.getInputs().size() == 1);
                 require.using("Only one output state should be created.",
                         tx.getOutputs().size() == 2);
-              /*  final ProjectState out = tx.outputsOfType(ProjectState.class).get(0);
+                final ProjectState out = tx.outputsOfType(ProjectState.class).get(0);
                 final DemandState in = tx.inputsOfType(DemandState.class).get(0);
                 require.using("Sponsor must exist.",
-                        out.getSponsor() != null);
+                        out.getLender() != null);
                 require.using("Platform Lead must exist.",
-                        out.getPlatformLead() != null);
+                        out.getBorrower() != null);
                 require.using("CIO must exist.",
                         out.getCio() != null);
                 require.using("COO must exist.",
                         out.getCoo() != null);
-
-                require.using("Sponsors, platform lead, coo and cio must be the only signers.",
-                        command.getSigners().containsAll(Arrays.asList(out.getSponsor(), out.getPlatformLead(), out.getCio(), out.getCoo())
-                                .stream().map(AbstractParty::getOwningKey).collect(Collectors.toList())));
 
                 require.using("Description must exist.",
                         !out.getDescription().isEmpty());
@@ -55,23 +51,11 @@ public class ProjectContract implements Contract {
                         out.getAllocationKey() != null);
                 require.using("Budget must be > 0.",
                         out.getBudget() > 0);
-                require.using("Delivery team must not exist.",
-                        out.getDeliveryTeam() == null);
 
                 //CHECK INPUT AGAINST OUTPUT
                 require.using("Input description must be equal to output description",
                         out.getDescription().equals(in.getDescription()));
-                require.using("Input amount must be equal to output budget",
-                        out.getBudget() == in.getAmount());
-                require.using("Input sponsor must be equal to output sponsor",
-                        out.getSponsor() == in.getLender());
-                require.using("Input platform lead must be equal to output platform lead",
-                        out.getSponsor() == in.getLender());
-                require.using("Input start date must be equal to output start date",
-                        out.getStartDate() == in.getStartDate());
-                require.using("Input end date must be equal to output end date",
-                        out.getEndDate() == in.getEndDate());
-*/
+
                 return null;
             });
         }else{
