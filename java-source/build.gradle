@@ -145,9 +145,3 @@ task runExampleClientRPCJava(type: JavaExec) {
     main = 'com.example.client.ExampleClientRPC'
     args 'localhost:10006'
 }
-
-//task runDemandClientRPCJava(type: JavaExec) {
-//    classpath = sourceSets.main.runtimeClasspath
-//    main = 'com.example.client.DemandClientRPC'
-//    args 'localhost:10006'
-//}
