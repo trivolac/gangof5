@@ -232,18 +232,13 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td>Amount: </td>
                         <td>{{project.budget}}</td>
                     </tr>
+
+                    <tr>
+                        <td>Demand ID: </td>
+                        <td>{{project.demandId}}</td>
+                    </tr>
                 </table>
                 <br/>
-                <div ng-repeat="demand in demoApp.demands" class="panel panel-default">
-
-                        <table>
-                            <tr>
-                                <td>Demand ID: </td>
-                                <td>{{demand.linearId.id}}</td>
-                            </tr>
-                        </table>
-
-                </div>
                 <div class="float-right"  ng-show="demoApp.isPlatformLead">
                     <button type="button" class="btn btn-default">Allocate Delivery Teams</button>
                 </div>

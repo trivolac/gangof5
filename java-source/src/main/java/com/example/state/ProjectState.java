@@ -28,9 +28,10 @@ public class ProjectState implements LinearState, QueryableState {
     private final Party cio;
     private final Party coo;
     private final Party deliveryTeam;
+    private final String demandId;
     private final UniqueIdentifier linearId;
 
-    public ProjectState(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam) {
+    public ProjectState(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, String demandId) {
         this.projectCode = projectCode;
         this.allocationKey = allocationKey;
         this.description = description;
@@ -42,10 +43,11 @@ public class ProjectState implements LinearState, QueryableState {
         this.cio = cio;
         this.coo = coo;
         this.deliveryTeam = deliveryTeam;
+        this.demandId = demandId;
         this.linearId = new UniqueIdentifier();
     }
 
-    public ProjectState(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, UniqueIdentifier linearId) {
+    public ProjectState(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, String demandId, UniqueIdentifier linearId) {
         this.projectCode = projectCode;
         this.allocationKey = allocationKey;
         this.description = description;
@@ -57,6 +59,7 @@ public class ProjectState implements LinearState, QueryableState {
         this.cio = cio;
         this.coo = coo;
         this.deliveryTeam = deliveryTeam;
+        this.demandId = demandId;
         this.linearId = linearId;
     }
 
@@ -102,6 +105,10 @@ public class ProjectState implements LinearState, QueryableState {
 
     public Party getDeliveryTeam() {
         return deliveryTeam;
+    }
+
+    public String getDemandId() {
+        return demandId;
     }
 
     @NotNull
