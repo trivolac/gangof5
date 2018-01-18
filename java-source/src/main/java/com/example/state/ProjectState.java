@@ -129,7 +129,7 @@ public class ProjectState implements LinearState, QueryableState {
         if(schema instanceof ProjectSchemaV1){
             UUID uuid = (this.linearId == null) ? null : this.linearId.getId();
 
-            return new ProjectSchemaV1.PersistentProject(this.projectCode, this.allocationKey, this.description, this.budget, this.startDate, this.endDate, this.lender.toString(), this.borrower.toString(), this.cio.toString(), this.coo.toString(), this.deliveryTeam.toString(), uuid);
+            return new ProjectSchemaV1.PersistentProject(this.projectCode, this.allocationKey, this.description, this.budget, this.startDate, this.endDate, this.lender.toString(), this.borrower.toString(), this.cio.toString(), this.coo.toString(), this.deliveryTeam.toString(), this.demandId, uuid);
         }else{
             throw new IllegalArgumentException("Unrecognised schema $schema");
         }

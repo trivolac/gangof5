@@ -182,7 +182,10 @@ public class DemandUpdateFlow {
             // Stage 5
             progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
 
-            ProjectState projectState = new ProjectState("P1001", "A1001", newUpdatedDemand.getDescription(),newUpdatedDemand.getAmount(), newUpdatedDemand.getStartDate(), newUpdatedDemand.getEndDate(),
+            ProjectState projectState = new ProjectState("P1001", "A1001"
+                    , newUpdatedDemand.getDescription()
+                    ,newUpdatedDemand.getAmount()
+                    , newUpdatedDemand.getStartDate(), newUpdatedDemand.getEndDate(),
                     newUpdatedDemand.getLender(), newUpdatedDemand.getBorrower(),cio, coo,dl_1, currentDemandState.getLinearId().getId().toString());
 
             final TransactionBuilder txBuilder = new TransactionBuilder(notary)

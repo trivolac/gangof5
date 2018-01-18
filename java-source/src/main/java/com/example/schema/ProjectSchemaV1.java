@@ -31,9 +31,10 @@ public class ProjectSchemaV1 extends MappedSchema {
         @Column(name = "cio") private final String cio;
         @Column(name = "coo") private final String coo;
         @Column(name = "deliveryTeam") private final String deliveryTeam;
+        @Column(name = "demandId") private final String demandId;
         @Column(name = "linearId") private final UUID linearId;
 
-        public PersistentProject(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, String sponsor, String platformLead, String cio, String coo, String deliveryTeam, UUID linearId) {
+        public PersistentProject(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, String sponsor, String platformLead, String cio, String coo, String deliveryTeam, String demandId, UUID linearId) {
             this.projectCode = projectCode;
             this.allocationKey = allocationKey;
             this.description = description;
@@ -45,6 +46,7 @@ public class ProjectSchemaV1 extends MappedSchema {
             this.cio = cio;
             this.coo = coo;
             this.deliveryTeam = deliveryTeam;
+            this.demandId = demandId;
             this.linearId = linearId;
         }
 
@@ -94,6 +96,10 @@ public class ProjectSchemaV1 extends MappedSchema {
 
         public UUID getLinearId() {
             return linearId;
+        }
+
+        public String getDemandId() {
+            return demandId;
         }
     }
 }
