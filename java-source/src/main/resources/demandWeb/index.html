@@ -176,6 +176,7 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td>{{demand.approvalParties.length === 0 ? '' : demand.approvalParties}}</td>
                     </tr>
                 </table>
+
                 <div ng-show="demoApp.isPlatformLead">
                     <br/>
                     <div class="float-right">
@@ -217,10 +218,34 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td>Description: </td>
                         <td>{{project.description}}</td>
                     </tr>
+                    <tr>
+                        <td>Start Date: </td>
+                        <td>{{project.startDate}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>End Date: </td>
+                        <td>{{project.endDate}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Amount: </td>
+                        <td>{{project.budget}}</td>
+                    </tr>
                 </table>
                 <br/>
-                <div class="float-right">
-                    <button type="button" class="btn btn-default">Button</button>
+                <div ng-repeat="demand in demoApp.demands" class="panel panel-default">
+
+                        <table>
+                            <tr>
+                                <td>Demand ID: </td>
+                                <td>{{demand.linearId.id}}</td>
+                            </tr>
+                        </table>
+
+                </div>
+                <div class="float-right"  ng-show="demoApp.isPlatformLead">
+                    <button type="button" class="btn btn-default">Allocate Delivery Teams</button>
                 </div>
             </div>
         </div>
