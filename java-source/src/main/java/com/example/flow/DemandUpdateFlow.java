@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 
 public class DemandUpdateFlow {
@@ -254,7 +255,55 @@ public class DemandUpdateFlow {
 
                 @Override
                 protected void checkTransaction(SignedTransaction stx) throws FlowException {
-                    System.out.println("****************** SignTxFlow.checkTransaction ::::::::::::::::::::: " + otherPartyFlowSession.getCounterparty().getName());
+
+                    System.out.println("****************** SignTxFlow.checkTransaction ::::::::::::::::::::: " + getServiceHub().getMyInfo().getLegalIdentities().get(0).getName());
+
+                    String party = getServiceHub().getMyInfo().getLegalIdentities().get(0).getName().getOrganisation();
+                    if ("COO".equals(party)) {
+                        System.out.println("COO Tx check running now ..............");
+                        requireThat(require -> {
+                            ContractState output = stx.getTx().getOutputs().get(1).getData();
+                            require.using("This must be a Project creation flow", output instanceof ProjectState);
+                            ProjectState proj = (ProjectState) output;
+                            require.using("COO is not accepting Projects with initial ask of >500k", proj.getBudget() <= 500000);
+                            return null;
+                        });
+                    }
+                    if("CIO".equals(party)) {
+                        System.out.println("CIO Tx check running now ..............");
+                        requireThat(require -> {
+                            ContractState output1 = stx.getTx().getOutputs().get(1).getData();
+                            require.using("This must be a Project creation flow", output1 instanceof ProjectState);
+                            ProjectState proj1 = (ProjectState) output1;
+
+
+                            Date startDateObj = null;
+                            Date endDateObj = null;
+                            DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+
+                            try {
+                                startDateObj = df.parse(proj1.getStartDate());
+                            } catch (ParseException e) {
+
+                                //return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' has wrong format (dd/MM/yyyy)).\n").build();
+                            }
+
+                            try {
+                                endDateObj = df.parse(proj1.getEndDate());
+                            } catch (ParseException e) {
+
+                                //return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' has wrong format (dd/MM/yyyy)).\n").build();
+                            }
+
+                            //diff in msec
+                            long diff = endDateObj.getTime() - startDateObj.getTime();
+                            //diff in days
+                            long days = diff / (24 * 60 * 60 * 1000);
+                            require.using("CIO is not allowing Projects with duration more than 2yrs.", days <= (365*2));
+                            return null;
+                        });
+
+                    }
                 }
             }
             //subFlow(new IdentitySyncFlow.Receive(otherPartyFlowSession));
