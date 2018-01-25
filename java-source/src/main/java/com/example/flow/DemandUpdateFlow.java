@@ -162,7 +162,7 @@ public class DemandUpdateFlow {
 
             // Stage 3. This flow can only be initiated by the current recipient.
             if (!borrowerIdentity.equals(getOurIdentity())) {
-                throw new FlowException("Update Demand flow must be initiated by the borrower.");
+                throw new FlowException("UpdateBudget Demand flow must be initiated by the borrower.");
             }
 
             // Stage 4. Create a update command.

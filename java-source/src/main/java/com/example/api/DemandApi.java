@@ -189,8 +189,6 @@ public class DemandApi {
                     .startFlowDynamic(DemandUpdateFlow.Initiator.class, linearId, startDate, endDate, amt);
             //flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s\n", evt));
 
-            flowHandle.getReturnValue().get();
-
             // The line below blocks and waits for the flow to return.
             flowHandle.getReturnValue().get();
 
@@ -204,10 +202,19 @@ public class DemandApi {
         }
     }
 
+    /**
+     * Returns all parties registered with the [NetworkMapService]. These names can be used to look up identities
+     * using the [IdentityService].
+     */
     @GET
-    @Path("state")
+    @Path("peers")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<StateAndRef<DemandState>> getStates() {
-        return rpcOps.vaultQuery(DemandState.class).getStates();
+    public Map<String, List<CordaX500Name>> getPeers() {
+        List<NodeInfo> nodeInfoSnapshot = rpcOps.networkMapSnapshot();
+        return ImmutableMap.of("peers", nodeInfoSnapshot
+                .stream()
+                .map(node -> node.getLegalIdentities().get(0).getName())
+                .filter(name -> !name.equals(myLegalName) && !serviceNames.contains(name.getOrganisation()))
+                .collect(toList()));
     }
 }

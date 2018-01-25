@@ -32,6 +32,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
 
     let peers = [];
     let platformLeads = [];
+    let deliveryTeams = [];
 
     $http.get(apiBaseURL + "me").then(function(response){
         demoApp.thisNode = response.data.me;
@@ -41,10 +42,12 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
         demoApp.isPlatformLead = organisation.substring(0,2) === "PL";
     });
 
-    $http.get("/api/example/peers").then((response) => peers = response.data.peers);
+    $http.get("/api/demand/peers").then((response) => peers = response.data.peers);
 
     $http.get("/api/demand/platformLeads").then((response) => platformLeads = response.data.plPeers);
     demoApp.plResponse = platformLeads;
+
+    $http.get("/api/project/deliveryTeams").then((response) => deliveryTeams = response.data.deliveryTeams);
 
     demoApp.openCreateDemandModal = () => {
         const modalInstance = $uibModal.open({
@@ -80,6 +83,24 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
         modalInstance.result.then(() => {}, () => {});
     };
 
+    demoApp.openAllocationModal = (project) => {
+        const modalInstance = $uibModal.open({
+            templateUrl: 'allocationModal.html',
+            controller: 'ModalAllocationCtrl',
+            controllerAs: 'allocateModalInstance',
+            resolve: {
+                demoApp: () => demoApp,
+                apiBaseURL: () => apiProjBaseUrl,
+                deliveryTeams: () => deliveryTeams,
+                id: () => project.linearId.id,
+                description: () => project.description,
+                budget: () => project.budget
+            }
+        });
+
+        modalInstance.result.then(() => {}, () => {});
+    };
+
     demoApp.getDemands = () => $http.get(apiBaseURL)
         .then((response) => demoApp.demands = Object.keys(response.data)
             .map((key) => response.data[key].state.data)
@@ -90,14 +111,20 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
             .map((key) => response.data[key].state.data)
             .reverse());
 
+    demoApp.getAllocations = () => $http.get("/api/project/allocations")
+        .then((response) => demoApp.allocations = Object.keys(response.data)
+            .map((key) => response.data[key].state.data)
+            .reverse());
 
     demoApp.getDemands();
     demoApp.getProjects();
+    demoApp.getAllocations();
 
     //refresh every 5s
     setInterval(function(){
         demoApp.getDemands();
         demoApp.getProjects();
+        demoApp.getAllocations();
     }, 5000);
 });
 
@@ -131,6 +158,7 @@ app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalIns
                     updateModalInstance.displayMessage(result);
                     demoApp.getDemands();
                     demoApp.getProjects();
+                    demoApp.getAllocations();
                 },
                 (result) => {
                     updateModalInstance.displayMessage(result);
@@ -172,6 +200,80 @@ app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalIns
     }
 });
 
+app.controller('ModalAllocationCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, deliveryTeams, id, description, budget) {
+    const allocateModalInstance = this;
+
+    allocateModalInstance.deliveryTeams = deliveryTeams;
+    allocateModalInstance.form = {};
+    allocateModalInstance.formError = false;
+    allocateModalInstance.id = id;
+    allocateModalInstance.description = description;
+    allocateModalInstance.budget = budget;
+
+    // Validate and create Allocation.
+    allocateModalInstance.allocate = (id) => {
+        if (invalidFormInput()) {
+            allocateModalInstance.formError = true;
+        } else {
+            allocateModalInstance.formError = false;
+
+            $uibModalInstance.close();
+
+            let startDate = formatDate(allocateModalInstance.form.startDate);
+            let endDate = formatDate(allocateModalInstance.form.endDate);
+            let allocationAmt = allocateModalInstance.form.allocationAmount;
+            let deliveryTeam = allocateModalInstance.form.deliveryTeam;
+            const allocationEndpoint = `${apiBaseURL}allocate-delivery-team?amount=${allocationAmt}&startDate=${startDate}&endDate=${endDate}&projectId=${id}&deliveryTeam=${deliveryTeam}`;
+
+            $http.post(allocationEndpoint).then(
+                (result) => {
+                    console.log("SUCCESS");
+                    allocateModalInstance.displayMessage(result);
+                    demoApp.getDemands();
+                    demoApp.getProjects();
+                    demoApp.getAllocations();
+                },
+                (result) => {
+                    console.log("FAIL");
+                    allocateModalInstance.displayMessage(result);
+                }
+            );
+        }
+    };
+
+    allocateModalInstance.displayMessage = (message) => {
+        const modalInstanceTwo = $uibModal.open({
+            templateUrl: 'messageContent.html',
+            controller: 'messageCtrl',
+            controllerAs: 'modalInstanceTwo',
+            resolve: { message: () => message }
+        });
+
+        // No behaviour on close / dismiss.
+        modalInstanceTwo.result.then(() => {}, () => {});
+    };
+
+    // Close create Demand modal dialogue.
+    allocateModalInstance.cancel = () => $uibModalInstance.dismiss();
+
+    // Validate Allocation
+    function invalidFormInput() {
+        return isNaN(allocateModalInstance.form.allocationAmount) || (allocateModalInstance.form.deliveryTeam === undefined);
+    }
+
+    //format date
+    function formatDate(date){
+        let month = '' + (date.getMonth() + 1),
+            day = '' + date.getDate(),
+            year = date.getFullYear();
+
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+
+        return [day, month, year].join('/');
+    }
+});
+
 app.controller('ModalCreateDemandCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, peers) {
     const createModalInstance = this;
 
@@ -196,6 +298,7 @@ app.controller('ModalCreateDemandCtrl', function ($http, $location, $uibModalIns
                     createModalInstance.displayMessage(result);
                     demoApp.getDemands();
                     demoApp.getProjects();
+                    demoApp.getAllocations();
                 },
                 (result) => {
                     createModalInstance.displayMessage(result);

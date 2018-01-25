@@ -140,5 +140,11 @@ public class ProjectState implements LinearState, QueryableState {
     public List<AbstractParty> getParticipants() {
         return Arrays.asList(lender, borrower, cio, coo, deliveryTeam);
     }
+
+    public ProjectState deductAllocationFromBudget(int amount){
+        return new ProjectState(this.projectCode, this.allocationKey, this.description, this.budget - amount,
+                this.startDate, this.endDate, this.lender, this.borrower, this.cio, this.coo, this.deliveryTeam,
+                this.demandId, this.linearId);
+    }
 }
 
