@@ -82,7 +82,7 @@ public class AllocationFlow {
             final ProjectState inputProjectState = inputProjectStateAndRef.getState().getData();
 
             // Stage 2. Resolve the project lead and coo identity
-            final Party platformLead = inputProjectState.getBorrower();
+            final Party platformLead = inputProjectState.getPlatformLead();
             final Party coo = inputProjectState.getCoo();
 
             // Stage 3. This flow can only be initiated by the project lead.

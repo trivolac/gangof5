@@ -30,15 +30,15 @@ public class DemandContract implements Contract{
                         tx.getOutputs().size() == 1);
                 final DemandState out = tx.outputsOfType(DemandState.class).get(0);
                 require.using("The sponsor and platform lead cannot be the same entity.",
-                        out.getLender() != out.getBorrower());
+                        out.getSponsor() != out.getPlatformLead());
                 require.using("Sponsors and platform lead must be the only signers.",
                         command.getSigners().containsAll(out.getParticipants().stream().filter(Objects::nonNull).map(AbstractParty::getOwningKey).collect(Collectors.toList())));
                 require.using("Description must exist.",
                         !out.getDescription().isEmpty());
                 require.using("Sponsor must exist.",
-                        out.getLender() != null);
+                        out.getSponsor() != null);
                 require.using("Platform Lead must exist.",
-                        out.getBorrower() != null);
+                        out.getPlatformLead() != null);
                 require.using("Amount must be 0.",
                         out.getAmount() == 0);
                 require.using("No approval parties must exist.",
@@ -55,7 +55,7 @@ public class DemandContract implements Contract{
                   /*  final DemandState out = tx.outputsOfType(DemandState.class).get(0);
                     final DemandState in = tx.inputsOfType(DemandState.class).get(0);
                     require.using("The sponsor and platform lead cannot be the same entity.",
-                            out.getLender() != out.getBorrower());
+                            out.getSponsor() != out.getPlatformLead());
                     require.using("All of the participants must be signers.",
                             command.getSigners().containsAll(out.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList())));
 
@@ -65,9 +65,9 @@ public class DemandContract implements Contract{
                     require.using("Description must exist.",
                             !out.getDescription().isEmpty());
                     require.using("Sponsor must exist.",
-                            out.getLender() != null);
+                            out.getSponsor() != null);
                     require.using("Platform Lead must exist.",
-                            out.getBorrower() != null);
+                            out.getPlatformLead() != null);
                     require.using("Approval parties must exist.",
                             out.getApprovalParties() != null && !out.getApprovalParties().isEmpty());
                     require.using("Start date must exist.",
@@ -81,9 +81,9 @@ public class DemandContract implements Contract{
                     require.using("Description of Input and Output should be the same.",
                             out.getDescription().equals(in.getDescription()));
                     require.using("Platform Lead of Input and Output should be the same.",
-                            out.getBorrower() == in.getBorrower());
+                            out.getPlatformLead() == in.getPlatformLead());
                     require.using("Sponsor of Input and Output should be the same.",
-                            out.getLender() == in.getLender());*/
+                            out.getSponsor() == in.getSponsor());*/
 
                     return null;
                 });

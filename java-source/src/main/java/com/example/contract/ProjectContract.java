@@ -27,9 +27,9 @@ public class ProjectContract implements Contract {
                 final ProjectState out = tx.outputsOfType(ProjectState.class).get(0);
                 final DemandState in = tx.inputsOfType(DemandState.class).get(0);
                 require.using("Sponsor must exist.",
-                        out.getLender() != null);
+                        out.getSponsor() != null);
                 require.using("Platform Lead must exist.",
-                        out.getBorrower() != null);
+                        out.getPlatformLead() != null);
                 require.using("CIO must exist.",
                         out.getCio() != null);
                 require.using("COO must exist.",
@@ -67,9 +67,9 @@ public class ProjectContract implements Contract {
                 final AllocationState outputAllocationState = tx.outputsOfType(AllocationState.class).get(0);
 
                 require.using("Sponsor must exist.",
-                        outputProjectState.getLender() != null);
+                        outputProjectState.getSponsor() != null);
                 require.using("Platform Lead must exist.",
-                        outputProjectState.getBorrower() != null);
+                        outputProjectState.getPlatformLead() != null);
                 require.using("CIO must exist.",
                         outputProjectState.getCio() != null);
                 require.using("COO must exist.",
@@ -100,9 +100,9 @@ public class ProjectContract implements Contract {
                 require.using("Input allocation key must be equal to output allocation key",
                         outputProjectState.getAllocationKey().equals(inputProjectState.getAllocationKey()));
                 require.using("Input sponsor must be equal to output sponsor",
-                        outputProjectState.getLender().equals(inputProjectState.getLender()));
+                        outputProjectState.getSponsor().equals(inputProjectState.getSponsor()));
                 require.using("Input platform lead must be equal to output platform lead",
-                        outputProjectState.getBorrower().equals(inputProjectState.getBorrower()));
+                        outputProjectState.getPlatformLead().equals(inputProjectState.getPlatformLead()));
                 require.using("Input cio must be equal to output cio",
                         outputProjectState.getCio().equals(inputProjectState.getCio()));
                 require.using("Input coo must be equal to output coo",

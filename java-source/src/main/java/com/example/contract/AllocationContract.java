@@ -36,7 +36,7 @@ public class AllocationContract implements Contract {
             require.using("Platform Lead must exist.",
                     outputAllocationState.getPlatformLead() != null);
             require.using("Platform Lead must tally between input and output",
-                    inputProjectState.getBorrower().equals(outputAllocationState.getPlatformLead()));
+                    inputProjectState.getPlatformLead().equals(outputAllocationState.getPlatformLead()));
             require.using("Delivery Team must exist.",
                     outputAllocationState.getDeliveryTeam() != null);
             require.using("COO must exist",

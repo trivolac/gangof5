@@ -6,9 +6,7 @@ import com.example.contract.ProjectContract;
 import com.example.state.DemandState;
 import com.example.state.ProjectState;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import net.corda.confidential.IdentitySyncFlow;
 import net.corda.core.contracts.*;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
@@ -16,13 +14,10 @@ import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
-import net.corda.core.serialization.CordaSerializable;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
-import net.sourceforge.plantuml.project.Project;
 
-import javax.ws.rs.core.Response;
 import java.security.PublicKey;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -30,9 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 
@@ -140,8 +133,8 @@ public class DemandUpdateFlow {
             final DemandState currentDemandState = demandStateUpd.getState().getData();
 
             // Stage 2. Resolve the lender and borrower identity if the obligation is anonymous.
-            final Party borrowerIdentity = currentDemandState.getBorrower();
-            final Party lenderIdentity = currentDemandState.getLender();
+            final Party borrowerIdentity = currentDemandState.getPlatformLead();
+            final Party lenderIdentity = currentDemandState.getSponsor();
             final PublicKey lenderKey = lenderIdentity.getOwningKey();
             final PublicKey borrwerKey = borrowerIdentity.getOwningKey();
 
@@ -186,7 +179,7 @@ public class DemandUpdateFlow {
                     , newUpdatedDemand.getDescription()
                     ,newUpdatedDemand.getAmount()
                     , newUpdatedDemand.getStartDate(), newUpdatedDemand.getEndDate(),
-                    newUpdatedDemand.getLender(), newUpdatedDemand.getBorrower(),cio, coo,dl_1, currentDemandState.getLinearId().getId().toString());
+                    newUpdatedDemand.getSponsor(), newUpdatedDemand.getPlatformLead(),cio, coo,dl_1, currentDemandState.getLinearId().getId().toString());
 
             final TransactionBuilder txBuilder = new TransactionBuilder(notary)
                     .addInputState(demandStateUpd)

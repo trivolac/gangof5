@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,15 +24,15 @@ public class DemandState implements LinearState, QueryableState {
     private final Integer amount;
     private final String startDate;
     private final String endDate;
-    private final Party lender;
-    private final Party borrower;
+    private final Party sponsor;
+    private final Party platformLead;
     private final List<Party> approvalParties;
     private final UniqueIdentifier linearId;
 
-    public DemandState(String description, Party lender, Party borrower) {
+    public DemandState(String description, Party sponsor, Party platformLead) {
         this.description = description;
-        this.lender = lender;
-        this.borrower = borrower;
+        this.sponsor = sponsor;
+        this.platformLead = platformLead;
         this.amount = 0;
         this.startDate = null;
         this.endDate = null;
@@ -41,14 +40,14 @@ public class DemandState implements LinearState, QueryableState {
         this.linearId = new UniqueIdentifier();
     }
 
-    public DemandState(String description, Party lender, Party borrower,
+    public DemandState(String description, Party sponsor, Party platformLead,
                        Integer amount, String startDate, String endDate, List<Party> participantList, UniqueIdentifier linearId) {
         this.description = description;
         this.amount = amount;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.lender = lender;
-        this.borrower = borrower;
+        this.sponsor = sponsor;
+        this.platformLead = platformLead;
         this.approvalParties = participantList;
         this.linearId = linearId;
     }
@@ -69,12 +68,12 @@ public class DemandState implements LinearState, QueryableState {
         return endDate;
     }
 
-    public Party getLender() {
-        return lender;
+    public Party getSponsor() {
+        return sponsor;
     }
 
-    public Party getBorrower() {
-        return borrower;
+    public Party getPlatformLead() {
+        return platformLead;
     }
 
     public List<Party> getApprovalParties() {
@@ -105,7 +104,7 @@ public class DemandState implements LinearState, QueryableState {
             UUID linearIdString = (this.linearId == null) ? null : this.linearId.getId();
 
             return new DemandSchemaV1.PersistentDemand(
-                    this.description, this.amount, this.startDate, this.endDate, this.lender.toString(), this.borrower.toString(),
+                    this.description, this.amount, this.startDate, this.endDate, this.sponsor.toString(), this.platformLead.toString(),
                     approvalPartiesStringList
                     , linearIdString);
         }else{
@@ -119,15 +118,15 @@ public class DemandState implements LinearState, QueryableState {
 
     public DemandState updateState(Integer amount, String startDate, String endDate, List<Party> participentList, UniqueIdentifier linearId){
         participentList.addAll(this.getApprovalParties());
-        return new DemandState(this.description, this.lender, this.borrower, amount, startDate, endDate, participentList, linearId);
+        return new DemandState(this.description, this.sponsor, this.platformLead, amount, startDate, endDate, participentList, linearId);
     }
 
     @NotNull
     @Override
     public List<AbstractParty> getParticipants() {
         List<AbstractParty> partyList = new ArrayList<>();
-        partyList.add(lender);
-        partyList.add(borrower);
+        partyList.add(sponsor);
+        partyList.add(platformLead);
         partyList.addAll(approvalParties);
         return partyList;
     }
@@ -139,8 +138,8 @@ public class DemandState implements LinearState, QueryableState {
                 ", amount=" + amount +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
-                ", sponsor=" + lender +
-                ", platformLead=" + borrower +
+                ", sponsor=" + sponsor +
+                ", platformLead=" + platformLead +
                 ", approvalParties=" + approvalParties +
                 ", linearId=" + linearId +
                 '}';

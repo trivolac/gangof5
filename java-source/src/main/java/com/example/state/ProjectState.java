@@ -12,7 +12,6 @@ import net.corda.core.schemas.QueryableState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +22,8 @@ public class ProjectState implements LinearState, QueryableState {
     private final int budget;
     private final String startDate;
     private final String endDate;
-    private final Party lender;
-    private final Party borrower;
+    private final Party sponsor;
+    private final Party platformLead;
     private final Party cio;
     private final Party coo;
     private final Party deliveryTeam;
@@ -38,8 +37,8 @@ public class ProjectState implements LinearState, QueryableState {
         this.budget = budget;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.lender = sponsor;
-        this.borrower = platformLead;
+        this.sponsor = sponsor;
+        this.platformLead = platformLead;
         this.cio = cio;
         this.coo = coo;
         this.deliveryTeam = deliveryTeam;
@@ -54,8 +53,8 @@ public class ProjectState implements LinearState, QueryableState {
         this.budget = budget;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.lender = sponsor;
-        this.borrower = platformLead;
+        this.sponsor = sponsor;
+        this.platformLead = platformLead;
         this.cio = cio;
         this.coo = coo;
         this.deliveryTeam = deliveryTeam;
@@ -87,12 +86,12 @@ public class ProjectState implements LinearState, QueryableState {
         return endDate;
     }
 
-    public Party getLender() {
-        return lender;
+    public Party getSponsor() {
+        return sponsor;
     }
 
-    public Party getBorrower() {
-        return borrower;
+    public Party getPlatformLead() {
+        return platformLead;
     }
 
     public Party getCio() {
@@ -129,7 +128,7 @@ public class ProjectState implements LinearState, QueryableState {
         if(schema instanceof ProjectSchemaV1){
             UUID uuid = (this.linearId == null) ? null : this.linearId.getId();
 
-            return new ProjectSchemaV1.PersistentProject(this.projectCode, this.allocationKey, this.description, this.budget, this.startDate, this.endDate, this.lender.toString(), this.borrower.toString(), this.cio.toString(), this.coo.toString(), this.deliveryTeam.toString(), this.demandId, uuid);
+            return new ProjectSchemaV1.PersistentProject(this.projectCode, this.allocationKey, this.description, this.budget, this.startDate, this.endDate, this.sponsor.toString(), this.platformLead.toString(), this.cio.toString(), this.coo.toString(), this.deliveryTeam.toString(), this.demandId, uuid);
         }else{
             throw new IllegalArgumentException("Unrecognised schema $schema");
         }
@@ -138,12 +137,12 @@ public class ProjectState implements LinearState, QueryableState {
     @NotNull
     @Override
     public List<AbstractParty> getParticipants() {
-        return Arrays.asList(lender, borrower, cio, coo, deliveryTeam);
+        return Arrays.asList(sponsor, platformLead, cio, coo, deliveryTeam);
     }
 
     public ProjectState deductAllocationFromBudget(int amount){
         return new ProjectState(this.projectCode, this.allocationKey, this.description, this.budget - amount,
-                this.startDate, this.endDate, this.lender, this.borrower, this.cio, this.coo, this.deliveryTeam,
+                this.startDate, this.endDate, this.sponsor, this.platformLead, this.cio, this.coo, this.deliveryTeam,
                 this.demandId, this.linearId);
     }
 }
