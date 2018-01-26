@@ -1,6 +1,7 @@
 package com.example.state;
 
 import com.example.schema.DemandSchemaV1;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.common.collect.ImmutableList;
 import net.corda.core.contracts.LinearState;
 import net.corda.core.contracts.UniqueIdentifier;
@@ -13,6 +14,7 @@ import net.corda.core.serialization.CordaSerializable;
 import org.jetbrains.annotations.NotNull;
 
 import java.security.PublicKey;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -22,8 +24,8 @@ import java.util.stream.Collectors;
 public class DemandState implements LinearState, QueryableState {
     private final String description;
     private final Integer amount;
-    private final String startDate;
-    private final String endDate;
+    private final LocalDateTime startDate;
+    private final LocalDateTime endDate;
     private final Party sponsor;
     private final Party platformLead;
     private final List<Party> approvalParties;
@@ -41,7 +43,7 @@ public class DemandState implements LinearState, QueryableState {
     }
 
     public DemandState(String description, Party sponsor, Party platformLead,
-                       Integer amount, String startDate, String endDate, List<Party> participantList, UniqueIdentifier linearId) {
+                       Integer amount, LocalDateTime startDate, LocalDateTime endDate, List<Party> participantList, UniqueIdentifier linearId) {
         this.description = description;
         this.amount = amount;
         this.startDate = startDate;
@@ -60,11 +62,13 @@ public class DemandState implements LinearState, QueryableState {
         return amount;
     }
 
-    public String getStartDate() {
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    public LocalDateTime getStartDate() {
         return startDate;
     }
 
-    public String getEndDate() {
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    public LocalDateTime getEndDate() {
         return endDate;
     }
 
@@ -116,7 +120,7 @@ public class DemandState implements LinearState, QueryableState {
         return getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList());
     }
 
-    public DemandState updateState(Integer amount, String startDate, String endDate, List<Party> participentList, UniqueIdentifier linearId){
+    public DemandState updateState(Integer amount, LocalDateTime startDate, LocalDateTime endDate, List<Party> participentList, UniqueIdentifier linearId){
         participentList.addAll(this.getApprovalParties());
         return new DemandState(this.description, this.sponsor, this.platformLead, amount, startDate, endDate, participentList, linearId);
     }

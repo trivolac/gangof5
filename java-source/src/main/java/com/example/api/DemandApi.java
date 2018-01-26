@@ -3,7 +3,6 @@ package com.example.api;
 import com.example.flow.DemandCreationFlow;
 import com.example.flow.DemandUpdateFlow;
 import com.example.state.DemandState;
-import com.example.state.IOUState;
 import com.example.util.ResponseUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -12,7 +11,6 @@ import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
-import net.corda.core.messaging.FlowHandle;
 import net.corda.core.messaging.FlowProgressHandle;
 import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
@@ -23,19 +21,17 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @Path("demand")
 public class DemandApi {
@@ -159,39 +155,34 @@ public class DemandApi {
             return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
         }
         if (endDate == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' missing or has wrong format.\n").build();
+        }
+
+        //parse date
+        logger.error("Parsing Date");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDateTime startDateObj;
+        LocalDateTime endDateObj;
+
+        try{
+            startDateObj = LocalDateTime.of(LocalDate.parse(startDate, formatter), LocalDateTime.MIN.toLocalTime());
+        }catch(DateTimeParseException e){
             return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
         }
 
-        Date startDateObj = null;
-        Date endDateObj = null;
-        DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-
-        try {
-            startDateObj = df.parse(startDate);
-        } catch (ParseException e) {
-            logger.error("ParseException for startDate", e);
-            return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' has wrong format (dd/MM/yyyy)).\n").build();
+        try{
+            endDateObj = LocalDateTime.of(LocalDate.parse(endDate, formatter), LocalDateTime.MIN.toLocalTime());
+        }catch(DateTimeParseException e){
+            return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' missing or has wrong format.\n").build();
         }
-
-        try {
-            endDateObj = df.parse(endDate);
-        } catch (ParseException e) {
-            logger.error("ParseException for startDate", e);
-            return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' has wrong format (dd/MM/yyyy)).\n").build();
-        }
-
 
         UniqueIdentifier linearId = UniqueIdentifier.Companion.fromString(id);
 
-
         logger.error("Starting Flow");
-
-
-
         try {
-            FlowHandle flowHandle = rpcOps
-                    .startFlowDynamic(DemandUpdateFlow.Initiator.class, linearId, startDate, endDate, amt);
-            //flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s\n", evt));
+            FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
+                    .startTrackedFlowDynamic(DemandUpdateFlow.Initiator.class, linearId, startDateObj, endDateObj, amt);
+            flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s%n", evt));
 
             // The line below blocks and waits for the flow to return.
             flowHandle.getReturnValue().get();

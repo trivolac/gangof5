@@ -1,15 +1,13 @@
 package com.example.schema;
 
 import com.google.common.collect.ImmutableList;
-import net.corda.core.contracts.UniqueIdentifier;
-import net.corda.core.identity.Party;
 import net.corda.core.schemas.MappedSchema;
 import net.corda.core.schemas.PersistentState;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ProjectSchemaV1 extends MappedSchema {
@@ -24,8 +22,8 @@ public class ProjectSchemaV1 extends MappedSchema {
         @Column(name = "allocationKey") private final String allocationKey;
         @Column(name = "description") private final String description;
         @Column(name = "budget") private final int budget;
-        @Column(name = "startDate") private final String startDate;
-        @Column(name = "endDate") private final String endDate;
+        @Column(name = "startDate") private final LocalDateTime startDate;
+        @Column(name = "endDate") private final LocalDateTime endDate;
         @Column(name = "sponsor") private final String sponsor;
         @Column(name = "platformLead") private final String platformLead;
         @Column(name = "cio") private final String cio;
@@ -34,7 +32,9 @@ public class ProjectSchemaV1 extends MappedSchema {
         @Column(name = "demandId") private final String demandId;
         @Column(name = "linearId") private final UUID linearId;
 
-        public PersistentProject(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, String sponsor, String platformLead, String cio, String coo, String deliveryTeam, String demandId, UUID linearId) {
+        public PersistentProject(String projectCode, String allocationKey, String description, int budget,
+                                 LocalDateTime startDate, LocalDateTime endDate, String sponsor, String platformLead,
+                                 String cio, String coo, String deliveryTeam, String demandId, UUID linearId) {
             this.projectCode = projectCode;
             this.allocationKey = allocationKey;
             this.description = description;
@@ -66,11 +66,11 @@ public class ProjectSchemaV1 extends MappedSchema {
             return budget;
         }
 
-        public String getStartDate() {
+        public LocalDateTime getStartDate() {
             return startDate;
         }
 
-        public String getEndDate() {
+        public LocalDateTime getEndDate() {
             return endDate;
         }
 

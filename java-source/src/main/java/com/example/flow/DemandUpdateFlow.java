@@ -7,9 +7,11 @@ import com.example.state.DemandState;
 import com.example.state.ProjectState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import net.corda.core.contracts.*;
+import net.corda.core.contracts.Command;
+import net.corda.core.contracts.ContractState;
+import net.corda.core.contracts.StateAndRef;
+import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.flows.*;
-import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.node.services.Vault;
@@ -19,13 +21,13 @@ import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
 
 import java.security.PublicKey;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
+import static com.example.contract.DemandContract.DEMAND_CONTRACT_ID;
+import static com.example.contract.ProjectContract.PROJECT_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 
@@ -33,41 +35,21 @@ public class DemandUpdateFlow {
     @InitiatingFlow
     @StartableByRPC
     public static class Initiator extends FlowLogic<SignedTransaction>{
-        public static final String DEMAND_CONTRACT_ID = "com.example.contract.DemandContract";
-        public static final String PROJECT_CONTRACT_ID = "com.example.contract.ProjectContract";
-
-        private final String startDate;
-        private final String endDate;
+        private final LocalDateTime startDate;
+        private final LocalDateTime endDate;
         private final int amount;
         private final UniqueIdentifier linearId;
-
 
         private final ProgressTracker.Step GENERATING_TRANSACTION = new ProgressTracker.Step("Generating transaction based on new IOU.");
         private final ProgressTracker.Step VERIFYING_TRANSACTION = new ProgressTracker.Step("Verifying contract constraints.");
         private final ProgressTracker.Step SIGNING_TRANSACTION = new ProgressTracker.Step("Signing transaction with our private key.");
         private final ProgressTracker.Step GATHERING_SIGS = new ProgressTracker.Step("Gathering the counterparty's signature.");
-        private final ProgressTracker.Step SYNCING = new ProgressTracker.Step("Syncing identities.")
-        {
-            @Override public ProgressTracker childProgressTracker() {
-                return CollectSignaturesFlow.Companion.tracker();
-            }
-        };
         private final ProgressTracker.Step FINALISING_TRANSACTION = new ProgressTracker.Step("Obtaining notary signature and recording transaction.") {
             @Override public ProgressTracker childProgressTracker() {
                 return FinalityFlow.Companion.tracker();
             }
         };
 
-        private Date getDate(String date){
-            DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-
-            try {
-                return df.parse(date);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
         // The progress tracker checkpoints each stage of the flow and outputs the specified messages when each
         // checkpoint is reached in the code. See the 'progressTracker.currentStep' expressions within the call()
         // function.
@@ -79,7 +61,7 @@ public class DemandUpdateFlow {
                 FINALISING_TRANSACTION
         );
 
-        public Initiator(UniqueIdentifier linearId, String startDate, String endDate, int amount) {
+        public Initiator(UniqueIdentifier linearId, LocalDateTime startDate, LocalDateTime endDate, int amount) {
             this.startDate = startDate;
             this.endDate = endDate;
             this.amount = amount;
@@ -91,32 +73,18 @@ public class DemandUpdateFlow {
             return progressTracker;
         }
 
-        Party resolveIdentity(AbstractParty abstractParty) {
-            return getServiceHub().getIdentityService().requireWellKnownPartyFromAnonymous(abstractParty);
-        }
-
-        static class SignTxFlowNoChecking extends SignTransactionFlow {
-            SignTxFlowNoChecking(FlowSession otherFlow, ProgressTracker progressTracker) {
-                super(otherFlow, progressTracker);
-            }
-
-            @Override
-            protected void checkTransaction(SignedTransaction tx) {
-                // TODO: Add checking here.
-            }
-        }
-        StateAndRef<DemandState> getObligationByLinearId(UniqueIdentifier linearId) throws FlowException {
+        private StateAndRef<DemandState> getDemandStateByLinearId(UniqueIdentifier linearId) throws FlowException {
             QueryCriteria queryCriteria = new QueryCriteria.LinearStateQueryCriteria(
                     null,
                     ImmutableList.of(linearId),
                     Vault.StateStatus.UNCONSUMED,
                     null);
 
-            List<StateAndRef<DemandState>> obligations = getServiceHub().getVaultService().queryBy(DemandState.class, queryCriteria).getStates();
-            if (obligations.size() != 1) {
-                throw new FlowException(String.format("Obligation with id %s not found.", linearId));
+            List<StateAndRef<DemandState>> demands = getServiceHub().getVaultService().queryBy(DemandState.class, queryCriteria).getStates();
+            if (demands.size() != 1) {
+                throw new FlowException(String.format("Demand with id %s not found.", linearId));
             }
-            return obligations.get(0);
+            return demands.get(0);
         }
 
         @Suspendable
@@ -129,84 +97,61 @@ public class DemandUpdateFlow {
             // Stage 1. Retrieve obligation specified by linearId from the vault.
             progressTracker.setCurrentStep(GENERATING_TRANSACTION);
 
-            final StateAndRef<DemandState> demandStateUpd = getObligationByLinearId(linearId);
+            final StateAndRef<DemandState> demandStateUpd = getDemandStateByLinearId(linearId);
             final DemandState currentDemandState = demandStateUpd.getState().getData();
 
             // Stage 2. Resolve the lender and borrower identity if the obligation is anonymous.
-            final Party borrowerIdentity = currentDemandState.getPlatformLead();
-            final Party lenderIdentity = currentDemandState.getSponsor();
-            final PublicKey lenderKey = lenderIdentity.getOwningKey();
-            final PublicKey borrwerKey = borrowerIdentity.getOwningKey();
+            final Party platformLead = currentDemandState.getPlatformLead();
+            final Party sponsor = currentDemandState.getSponsor();
+            final PublicKey lenderKey = sponsor.getOwningKey();
+            final PublicKey borrwerKey = platformLead.getOwningKey();
 
             CordaX500Name cioName = new CordaX500Name("CIO", "Singapore", "SG");
             CordaX500Name cooName = new CordaX500Name("COO", "Singapore", "SG");
-            CordaX500Name dl_1Name = new CordaX500Name("DLTeam1", "Singapore", "SG");
+            CordaX500Name dl1Name = new CordaX500Name("DLTeam1", "Singapore", "SG");
 
 
             final Party cio = getServiceHub().getIdentityService().wellKnownPartyFromX500Name(cioName);
             final Party coo = getServiceHub().getIdentityService().wellKnownPartyFromX500Name(cooName);
-            final Party dl_1 = getServiceHub().getIdentityService().wellKnownPartyFromX500Name(dl_1Name);
+            final Party dl1 = getServiceHub().getIdentityService().wellKnownPartyFromX500Name(dl1Name);
 
             final PublicKey cioKey = cio.getOwningKey();
             final PublicKey cooKey = coo.getOwningKey();
 
-            System.out.println("Patry CIO ::::: " + cio);
-            System.out.println("Patry COO ::::: " + coo);
-
             // Stage 3. This flow can only be initiated by the current recipient.
-            if (!borrowerIdentity.equals(getOurIdentity())) {
-                throw new FlowException("UpdateBudget Demand flow must be initiated by the borrower.");
+            if (!platformLead.equals(initiatorParty)) {
+                throw new FlowException("Update demand flow must be initiated by the platform lead.");
             }
 
-            // Stage 4. Create a update command.
-            /*final List<PublicKey> requiredSigners = currentDemandState.getParticipantKeys();
-
-            System.out.println("REquired signers ::::: " + requiredSigners);
-*/
             final DemandState newUpdatedDemand = currentDemandState.updateState(this.amount, this.startDate, this.endDate, Arrays.asList(cio,coo), linearId);
-
-            //  DemandState demandState = new DemandState(description, initiatorParty, newLender);
             final Command<DemandContract.Commands.Update> txCommandUpdate = new Command<>(new DemandContract.Commands.Update(), Arrays.asList(lenderKey, borrwerKey));
-
-            //  DemandState demandState = new DemandState(description, initiatorParty, newLender);
             final Command<ProjectContract.Commands.Create> txCommandApprove = new Command<>(new ProjectContract.Commands.Create(), Arrays.asList(cioKey, cooKey));
 
 
             // Stage 5
             progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
-
+            // Verify that the transaction is valid.
             ProjectState projectState = new ProjectState("P1001", "A1001"
                     , newUpdatedDemand.getDescription()
                     ,newUpdatedDemand.getAmount()
                     , newUpdatedDemand.getStartDate(), newUpdatedDemand.getEndDate(),
-                    newUpdatedDemand.getSponsor(), newUpdatedDemand.getPlatformLead(),cio, coo,dl_1, currentDemandState.getLinearId().getId().toString());
+                    newUpdatedDemand.getSponsor(), newUpdatedDemand.getPlatformLead(),cio, coo,dl1, currentDemandState.getLinearId().getId().toString());
 
             final TransactionBuilder txBuilder = new TransactionBuilder(notary)
                     .addInputState(demandStateUpd)
                     .addOutputState(newUpdatedDemand, DEMAND_CONTRACT_ID)
                     .addOutputState(projectState,PROJECT_CONTRACT_ID)
                     .addCommand(txCommandUpdate).addCommand(txCommandApprove);
+            txBuilder.verify(getServiceHub());
 
             // Stage 3.
             progressTracker.setCurrentStep(SIGNING_TRANSACTION);
-            // Verify that the transaction is valid.
-            txBuilder.verify(getServiceHub());
             // Sign the transaction.
             final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder, borrwerKey);
-            System.out.println("SignedTransaction ::::::::::: " + partSignedTx);
 
-
-            //FlowSession otherPartySession = initiateFlow(lenderIdentity);
-
-            //FlowSession borrowerIdentitySession = initiateFlow(borrowerIdentity);
             FlowSession cioSession = initiateFlow(coo);
             FlowSession cooSession = initiateFlow(cio);
-            FlowSession lenderIdentitySession = initiateFlow(lenderIdentity);
-
-            // Stage 8. Send any keys and certificates so the signers can verify each other's identity.
-         //   progressTracker.setCurrentStep(SYNCING);
-            //final Set<FlowSession> sessions = ImmutableSet.of(initiateFlow(borrowerIdentity), initiateFlow(cio), initiateFlow(coo), initiateFlow(lenderIdentity));
-           // subFlow(new IdentitySyncFlow.Send(sessions, partSignedTx.getTx(), SYNCING.childProgressTracker()));
+            FlowSession lenderIdentitySession = initiateFlow(sponsor);
 
             // Stage 4.
             progressTracker.setCurrentStep(GATHERING_SIGS);
@@ -214,18 +159,12 @@ public class DemandUpdateFlow {
             final SignedTransaction fullySignedTx = subFlow(
                     new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(cioSession, cooSession, lenderIdentitySession), CollectSignaturesFlow.Companion.tracker()));
 
-            System.out.println("Fully SignedTransaction ::::::::::: " + fullySignedTx);
-
-
             // Stage 5.
             progressTracker.setCurrentStep(FINALISING_TRANSACTION);
             // Notarise and record the transaction in both parties' vaults.
             return subFlow(new FinalityFlow(fullySignedTx));
         }
     }
-
-
-
 
     @InitiatedBy(Initiator.class)
     public static class Acceptor extends FlowLogic<SignedTransaction>{
@@ -240,76 +179,45 @@ public class DemandUpdateFlow {
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
-
-
-
             class SignTxFlow extends SignTransactionFlow {
-
                 private SignTxFlow(FlowSession otherSideSession, ProgressTracker progressTracker) {
                     super(otherSideSession, progressTracker);
                 }
 
                 @Override
                 protected void checkTransaction(SignedTransaction stx) throws FlowException {
-
-                    System.out.println("****************** SignTxFlow.checkTransaction ::::::::::::::::::::: " + getServiceHub().getMyInfo().getLegalIdentities().get(0).getName());
-
                     String party = getServiceHub().getMyInfo().getLegalIdentities().get(0).getName().getOrganisation();
                     if ("COO".equals(party)) {
-                        System.out.println("COO Tx check running now ..............");
                         requireThat(require -> {
-                            ContractState output = stx.getTx().getOutputs().get(1).getData();
-                            require.using("This must be a Project creation flow", output instanceof ProjectState);
-                            ProjectState proj = (ProjectState) output;
-                            require.using("COO is not accepting Projects with initial ask of >500k", proj.getBudget() <= 500000);
+                            ContractState outputContractState = stx.getTx().getOutputs().get(1).getData();
+                            require.using("This must be a Project creation flow", outputContractState instanceof ProjectState);
+                            ProjectState outputProjectState = (ProjectState) outputContractState;
+                            require.using("COO is not accepting Projects with initial ask of >500k", outputProjectState.getBudget() <= 500000);
                             return null;
                         });
                     }
                     if("CIO".equals(party)) {
-                        System.out.println("CIO Tx check running now ..............");
                         requireThat(require -> {
-                            ContractState output1 = stx.getTx().getOutputs().get(1).getData();
-                            require.using("This must be a Project creation flow", output1 instanceof ProjectState);
-                            ProjectState proj1 = (ProjectState) output1;
+                            ContractState outputContractState = stx.getTx().getOutputs().get(1).getData();
+                            require.using("This must be a Project creation flow", outputContractState instanceof ProjectState);
+                            ProjectState outputProjectState = (ProjectState) outputContractState;
 
+                            LocalDateTime startDate = outputProjectState.getStartDate();
+                            LocalDateTime endDate = outputProjectState.getEndDate();
 
-                            Date startDateObj = null;
-                            Date endDateObj = null;
-                            DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-
-                            try {
-                                startDateObj = df.parse(proj1.getStartDate());
-                            } catch (ParseException e) {
-
-                                //return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' has wrong format (dd/MM/yyyy)).\n").build();
-                            }
-
-                            try {
-                                endDateObj = df.parse(proj1.getEndDate());
-                            } catch (ParseException e) {
-
-                                //return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' has wrong format (dd/MM/yyyy)).\n").build();
-                            }
-
-                            //diff in msec
-                            long diff = endDateObj.getTime() - startDateObj.getTime();
-                            //diff in days
-                            long days = diff / (24 * 60 * 60 * 1000);
-                            require.using("CIO is not allowing Projects with duration more than 2yrs.", days <= (365*2));
+                            //difference
+                            long year = startDate.until(endDate, ChronoUnit.YEARS);
+                            long month = startDate.until(endDate, ChronoUnit.MONTHS);
+                            long day = startDate.until(endDate, ChronoUnit.DAYS);
+                            require.using("CIO is not allowing Projects with duration more than 2yrs.", year < 2 || (year == 2 && month == 0 && day == 0));
                             return null;
                         });
 
                     }
                 }
             }
-            //subFlow(new IdentitySyncFlow.Receive(otherPartyFlowSession));
-            SignedTransaction stx = subFlow(new SignTxFlow(otherPartyFlowSession, SignTransactionFlow.Companion.tracker()));
-            System.out.println("Acceptor.call ::: SignedTransaction :::: "+ stx);
 
-
-            return stx;
-
-            //return waitForLedgerCommit(stx.getId());
+            return subFlow(new SignTxFlow(otherPartyFlowSession, SignTransactionFlow.Companion.tracker()));
         }
 
 

@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.example.contract.AllocationContract.ALLOCATION_CONTRACT_ID;
-import static com.example.flow.DemandUpdateFlow.Initiator.PROJECT_CONTRACT_ID;
+import static com.example.contract.ProjectContract.PROJECT_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 public class AllocationFlow {

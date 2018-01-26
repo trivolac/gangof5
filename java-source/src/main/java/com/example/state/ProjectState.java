@@ -1,6 +1,7 @@
 package com.example.state;
 
 import com.example.schema.ProjectSchemaV1;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.common.collect.ImmutableList;
 import net.corda.core.contracts.LinearState;
 import net.corda.core.contracts.UniqueIdentifier;
@@ -11,6 +12,7 @@ import net.corda.core.schemas.PersistentState;
 import net.corda.core.schemas.QueryableState;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -20,8 +22,8 @@ public class ProjectState implements LinearState, QueryableState {
     private final String allocationKey;
     private final String description;
     private final int budget;
-    private final String startDate;
-    private final String endDate;
+    private final LocalDateTime startDate;
+    private final LocalDateTime endDate;
     private final Party sponsor;
     private final Party platformLead;
     private final Party cio;
@@ -30,7 +32,7 @@ public class ProjectState implements LinearState, QueryableState {
     private final String demandId;
     private final UniqueIdentifier linearId;
 
-    public ProjectState(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, String demandId) {
+    public ProjectState(String projectCode, String allocationKey, String description, int budget, LocalDateTime startDate, LocalDateTime endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, String demandId) {
         this.projectCode = projectCode;
         this.allocationKey = allocationKey;
         this.description = description;
@@ -46,7 +48,7 @@ public class ProjectState implements LinearState, QueryableState {
         this.linearId = new UniqueIdentifier();
     }
 
-    public ProjectState(String projectCode, String allocationKey, String description, int budget, String startDate, String endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, String demandId, UniqueIdentifier linearId) {
+    public ProjectState(String projectCode, String allocationKey, String description, int budget, LocalDateTime startDate, LocalDateTime endDate, Party sponsor, Party platformLead, Party cio, Party coo, Party deliveryTeam, String demandId, UniqueIdentifier linearId) {
         this.projectCode = projectCode;
         this.allocationKey = allocationKey;
         this.description = description;
@@ -78,11 +80,13 @@ public class ProjectState implements LinearState, QueryableState {
         return budget;
     }
 
-    public String getStartDate() {
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    public LocalDateTime getStartDate() {
         return startDate;
     }
 
-    public String getEndDate() {
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    public LocalDateTime getEndDate() {
         return endDate;
     }
 

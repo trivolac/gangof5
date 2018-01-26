@@ -11,7 +11,6 @@ import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
-import net.corda.core.messaging.FlowHandle;
 import net.corda.core.messaging.FlowProgressHandle;
 import net.corda.core.node.NodeInfo;
 import net.corda.core.node.services.Vault;
@@ -24,20 +23,16 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.OK;
 
 /**
  * Created by Shailendra on 17-01-2018.
@@ -168,8 +163,20 @@ public class ProjectApi {
         //parse date
         logger.error("Parsing Date");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        LocalDateTime startDateObj = LocalDateTime.of(LocalDate.parse(startDate, formatter), LocalDateTime.MIN.toLocalTime());
-        LocalDateTime endDateObj = LocalDateTime.of(LocalDate.parse(endDate, formatter), LocalDateTime.MIN.toLocalTime());
+        LocalDateTime startDateObj;
+        LocalDateTime endDateObj;
+
+        try{
+            startDateObj = LocalDateTime.of(LocalDate.parse(startDate, formatter), LocalDateTime.MIN.toLocalTime());
+        }catch(DateTimeParseException e){
+            return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
+        }
+
+        try{
+            endDateObj = LocalDateTime.of(LocalDate.parse(endDate, formatter), LocalDateTime.MIN.toLocalTime());
+        }catch(DateTimeParseException e){
+            return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' missing or has wrong format.\n").build();
+        }
 
         //delivery team
         logger.error("Delivery Team");

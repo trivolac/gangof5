@@ -8,7 +8,7 @@ import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,15 +22,15 @@ public class DemandSchemaV1 extends MappedSchema {
     public static class PersistentDemand extends PersistentState {
         @Column(name = "description") private final String description;
         @Column(name = "amount") private final int amount;
-        @Column(name = "startDate") private final String startDate;
-        @Column(name = "endDate") private final String endDate;
+        @Column(name = "startDate") private final LocalDateTime startDate;
+        @Column(name = "endDate") private final LocalDateTime endDate;
         @Column(name = "sponsor") private final String sponsor;
         @Column(name = "platformLead") private final String platformLead;
         @Column(name = "approvalParties") @ElementCollection
         private final List<String> approvalParties;
         @Column(name = "linearId") private final UUID linearId;
 
-        public PersistentDemand(String description, int amount, String startDate, String endDate, String sponsor, String platformLead, List<String> approvalParties, UUID linearId){
+        public PersistentDemand(String description, int amount, LocalDateTime startDate, LocalDateTime endDate, String sponsor, String platformLead, List<String> approvalParties, UUID linearId){
             this.description = description;
             this.amount = amount;
             this.startDate = startDate;
@@ -49,11 +49,11 @@ public class DemandSchemaV1 extends MappedSchema {
             return amount;
         }
 
-        public String getStartDate() {
+        public LocalDateTime getStartDate() {
             return startDate;
         }
 
-        public String getEndDate() {
+        public LocalDateTime getEndDate() {
             return endDate;
         }
 
