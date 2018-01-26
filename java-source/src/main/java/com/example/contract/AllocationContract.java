@@ -24,7 +24,7 @@ public class AllocationContract implements Contract {
             require.using("Two output state should be created.",
                     tx.getOutputs().size() == 2);
 
-            final ProjectState in = tx.inputsOfType(ProjectState.class).get(0);
+            final ProjectState inputProjectState = tx.inputsOfType(ProjectState.class).get(0);
             final AllocationState outputAllocationState = tx.outputsOfType(AllocationState.class).get(0);
             final ProjectState outputProjectState = tx.outputsOfType(ProjectState.class).get(0);
 
@@ -32,15 +32,17 @@ public class AllocationContract implements Contract {
             require.using("Description must exist.",
                     !outputAllocationState.getDescription().isEmpty());
             require.using("Description must tally between input and output",
-                    in.getDescription().equals(outputAllocationState.getDescription()));
-            require.using("Allocation amount must be non-negative.",
-                    outputAllocationState.getAllocationAmount() > 0);
+                    inputProjectState.getDescription().equals(outputAllocationState.getDescription()));
             require.using("Platform Lead must exist.",
                     outputAllocationState.getPlatformLead() != null);
+            require.using("Platform Lead must tally between input and output",
+                    inputProjectState.getBorrower().equals(outputAllocationState.getPlatformLead()));
             require.using("Delivery Team must exist.",
                     outputAllocationState.getDeliveryTeam() != null);
             require.using("COO must exist",
                     outputAllocationState.getCoo() != null);
+            require.using("COO must tally between input and output",
+                    inputProjectState.getCoo().equals(outputAllocationState.getCoo()));
             require.using("The delivery team and platform lead cannot be the same entity.",
                     outputAllocationState.getDeliveryTeam() != outputAllocationState.getPlatformLead());
             require.using("Delivery Team and platform lead must be signers.",
@@ -54,9 +56,20 @@ public class AllocationContract implements Contract {
             require.using("Project code must exist.",
                     outputAllocationState.getProjectCode() != null);
             require.using("Project code must tally between input and output",
-                    in.getProjectCode().equals(outputAllocationState.getProjectCode()));
+                    inputProjectState.getProjectCode().equals(outputAllocationState.getProjectCode()));
             require.using("Allocation key must exist.",
                     outputAllocationState.getAllocationKey() != null);
+            require.using("Allocation key must tally between input and output.",
+                    outputAllocationState.getAllocationKey().equals(inputProjectState.getAllocationKey()));
+
+            require.using("Allocation amount must be non-negative.",
+                    outputAllocationState.getAllocationAmount() > 0);
+            require.using("Allocation amount must be equal to (Input project budget - Output project budget)",
+                    outputAllocationState.getAllocationAmount() == inputProjectState.getBudget() - outputProjectState.getBudget());
+
+            require.using("End date cannot be earlier or equal to start date",
+                    outputAllocationState.getStartDate().isBefore(outputAllocationState.getEndDate()));
+
             return null;
         });
     }
