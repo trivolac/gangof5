@@ -227,14 +227,12 @@ app.controller('ModalAllocationCtrl', function ($http, $location, $uibModalInsta
 
             $http.post(allocationEndpoint).then(
                 (result) => {
-                    console.log("SUCCESS");
                     allocateModalInstance.displayMessage(result);
                     demoApp.getDemands();
                     demoApp.getProjects();
                     demoApp.getAllocations();
                 },
                 (result) => {
-                    console.log("FAIL");
                     allocateModalInstance.displayMessage(result);
                 }
             );
@@ -331,5 +329,5 @@ app.controller('ModalCreateDemandCtrl', function ($http, $location, $uibModalIns
 // Controller for success/fail modal dialogue.
 app.controller('messageCtrl', function ($uibModalInstance, message) {
     const modalInstanceTwo = this;
-    modalInstanceTwo.message = message.data;
+    modalInstanceTwo.message = message.data.message;
 });

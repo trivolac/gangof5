@@ -4,6 +4,7 @@ import com.example.flow.DemandCreationFlow;
 import com.example.flow.DemandUpdateFlow;
 import com.example.state.DemandState;
 import com.example.state.IOUState;
+import com.example.util.ResponseUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.corda.core.contracts.StateAndRef;
@@ -15,6 +16,7 @@ import net.corda.core.messaging.FlowHandle;
 import net.corda.core.messaging.FlowProgressHandle;
 import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,13 +130,15 @@ public class DemandApi {
                     .getReturnValue()
                     .get();
 
-            final String msg = String.format("Transaction id %s committed to ledger.\n", result.getId());
-            return Response.status(CREATED).entity(msg).build();
+            final String msg = String.format("Transaction id %s committed to ledger.\nDemand has been created.", result.getId());
+            final JSONObject returnJsonObj = ResponseUtil.generateSuccessJsonObject(msg);
+            return Response.status(CREATED).entity(returnJsonObj).build();
 
         } catch (Throwable ex) {
             final String msg = ex.getMessage();
             logger.error(ex.getMessage(), ex);
-            return Response.status(BAD_REQUEST).entity(msg).build();
+            final JSONObject returnJsonObj = ResponseUtil.generateErrorJsonObject(msg);
+            return Response.status(BAD_REQUEST).entity(returnJsonObj).build();
         }
     }
 
@@ -193,12 +197,14 @@ public class DemandApi {
             flowHandle.getReturnValue().get();
 
             final String msg = String.format("Transaction id %s with amount [%s] & startDate[%s] & endDate[%s] is updated to ledger.\n", id, amount, startDate, endDate);
-            return Response.status(CREATED).entity(msg).build();
+            final JSONObject returnJsonObj = ResponseUtil.generateSuccessJsonObject(msg);
+            return Response.status(CREATED).entity(returnJsonObj).build();
 
         } catch (Throwable ex) {
             final String msg = ex.getMessage();
             logger.error(ex.getMessage(), ex);
-            return Response.status(BAD_REQUEST).entity(msg).build();
+            final JSONObject returnJsonObj = ResponseUtil.generateErrorJsonObject(msg);
+            return Response.status(BAD_REQUEST).entity(returnJsonObj).build();
         }
     }
 

@@ -3,6 +3,7 @@ package com.example.api;
 import com.example.flow.AllocationFlow;
 import com.example.state.AllocationState;
 import com.example.state.ProjectState;
+import com.example.util.ResponseUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.corda.core.contracts.StateAndRef;
@@ -16,6 +17,7 @@ import net.corda.core.node.NodeInfo;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
 import net.corda.core.transactions.SignedTransaction;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,7 @@ import java.util.Map;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.OK;
 
 /**
  * Created by Shailendra on 17-01-2018.
@@ -190,15 +193,15 @@ public class ProjectApi {
                     .getReturnValue()
                     .get();
 
-            final String msg = String.format("Transaction id %s committed to ledger%n", result.getId());
-            System.out.println("MESSAGE IS ::::::::::::::::: " + msg);
-            return Response.status(CREATED).entity(msg).build();
+            final String msg = String.format("Transaction id %s committed to ledger.\nAllocation has been created.", result.getId());
+            final JSONObject returnJsonObj = ResponseUtil.generateSuccessJsonObject(msg);
+            return Response.status(CREATED).entity(returnJsonObj).build();
 
         } catch (Throwable ex) {
             final String msg = ex.getMessage();
-            System.out.println("ERROR MESSAGE IS ::::::::::::::::: " + msg);
             logger.error(ex.getMessage(), ex);
-            return Response.status(BAD_REQUEST).entity(msg).build();
+            final JSONObject returnJsonObj = ResponseUtil.generateErrorJsonObject(msg);
+            return Response.status(BAD_REQUEST).entity(returnJsonObj).build();
         }
     }
 
