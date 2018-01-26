@@ -23,29 +23,32 @@ public class AllocationState implements LinearState, QueryableState{
     private final String description;
     private final Party platformLead;
     private final Party deliveryTeam;
+    private final Party coo;
     private final int allocationAmount;
     private final LocalDateTime startDate;
     private final LocalDateTime endDate;
     private final UniqueIdentifier linearId;
 
-    public AllocationState(String projectCode, String allocationKey, String description, Party platformLead, Party deliveryTeam, int allocationAmount, LocalDateTime startDate, LocalDateTime endDate) {
+    public AllocationState(String projectCode, String allocationKey, String description, Party platformLead, Party deliveryTeam, Party coo, int allocationAmount, LocalDateTime startDate, LocalDateTime endDate) {
         this.projectCode = projectCode;
         this.allocationKey = allocationKey;
         this.description = description;
         this.platformLead = platformLead;
         this.deliveryTeam = deliveryTeam;
+        this.coo = coo;
         this.allocationAmount = allocationAmount;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.linearId =  new UniqueIdentifier();
+        this.linearId = new UniqueIdentifier();
     }
 
-    public AllocationState(String projectCode, String allocationKey, String description, Party platformLead, Party deliveryTeam, int allocationAmount, LocalDateTime startDate, LocalDateTime endDate, UniqueIdentifier linearId) {
+    public AllocationState(String projectCode, String allocationKey, String description, Party platformLead, Party deliveryTeam, Party coo, int allocationAmount, LocalDateTime startDate, LocalDateTime endDate, UniqueIdentifier linearId) {
         this.projectCode = projectCode;
         this.allocationKey = allocationKey;
         this.description = description;
         this.platformLead = platformLead;
         this.deliveryTeam = deliveryTeam;
+        this.coo = coo;
         this.allocationAmount = allocationAmount;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -70,6 +73,10 @@ public class AllocationState implements LinearState, QueryableState{
 
     public Party getDeliveryTeam() {
         return deliveryTeam;
+    }
+
+    public Party getCoo() {
+        return coo;
     }
 
     public int getAllocationAmount() {
@@ -105,8 +112,8 @@ public class AllocationState implements LinearState, QueryableState{
             UUID linearIdString = (this.linearId == null) ? null : this.linearId.getId();
 
             return new AllocationSchemaV1.PersistentAllocation(this.projectCode, this.allocationKey, this.description,
-                    this.platformLead.toString(), this.deliveryTeam.toString(), this.allocationAmount,
-                    this.startDate, this.endDate, linearIdString);
+                    this.platformLead.toString(), this.deliveryTeam.toString(), this.coo.toString(),
+                    this.allocationAmount, this.startDate, this.endDate, linearIdString);
         }else{
             throw new IllegalArgumentException("Unrecognised schema $schema");
         }
@@ -115,6 +122,6 @@ public class AllocationState implements LinearState, QueryableState{
     @NotNull
     @Override
     public List<AbstractParty> getParticipants() {
-        return Arrays.asList(platformLead, deliveryTeam);
+        return Arrays.asList(platformLead, deliveryTeam, coo);
     }
 }

@@ -5,11 +5,9 @@ import com.example.state.ProjectState;
 import net.corda.core.contracts.CommandData;
 import net.corda.core.contracts.CommandWithParties;
 import net.corda.core.contracts.Contract;
-import net.corda.core.identity.AbstractParty;
 import net.corda.core.transactions.LedgerTransaction;
 
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Arrays;
 
 import static net.corda.core.contracts.ContractsDSL.requireSingleCommand;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
@@ -31,8 +29,6 @@ public class AllocationContract implements Contract {
             final ProjectState outputProjectState = tx.outputsOfType(ProjectState.class).get(0);
 
             //checking output allocation state
-            require.using("Delivery Team and platform lead must be the only signers.",
-                    command.getSigners().containsAll(outputAllocationState.getParticipants().stream().filter(Objects::nonNull).map(AbstractParty::getOwningKey).collect(Collectors.toList())));
             require.using("Description must exist.",
                     !outputAllocationState.getDescription().isEmpty());
             require.using("Description must tally between input and output",
@@ -43,8 +39,14 @@ public class AllocationContract implements Contract {
                     outputAllocationState.getPlatformLead() != null);
             require.using("Delivery Team must exist.",
                     outputAllocationState.getDeliveryTeam() != null);
+            require.using("COO must exist",
+                    outputAllocationState.getCoo() != null);
             require.using("The delivery team and platform lead cannot be the same entity.",
                     outputAllocationState.getDeliveryTeam() != outputAllocationState.getPlatformLead());
+            require.using("Delivery Team and platform lead must be signers.",
+                    command.getSigners().containsAll(Arrays.asList(
+                            outputAllocationState.getDeliveryTeam().getOwningKey(),
+                            outputAllocationState.getPlatformLead().getOwningKey())));
             require.using("Start date must exist.",
                     outputAllocationState.getStartDate() != null);
             require.using("End date must exist.",

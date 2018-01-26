@@ -22,8 +22,6 @@ import net.corda.core.utilities.ProgressTracker;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.example.contract.AllocationContract.ALLOCATION_CONTRACT_ID;
 import static com.example.flow.DemandUpdateFlow.Initiator.PROJECT_CONTRACT_ID;
@@ -44,12 +42,6 @@ public class AllocationFlow {
         private final ProgressTracker.Step VERIFYING_TRANSACTION = new ProgressTracker.Step("Verifying contract constraints.");
         private final ProgressTracker.Step SIGNING_TRANSACTION = new ProgressTracker.Step("Signing transaction with our private key.");
         private final ProgressTracker.Step GATHERING_SIGS = new ProgressTracker.Step("Gathering the counterparty's signature.");
-        private final ProgressTracker.Step SYNCING = new ProgressTracker.Step("Syncing identities.")
-        {
-            @Override public ProgressTracker childProgressTracker() {
-                return CollectSignaturesFlow.Companion.tracker();
-            }
-        };
         private final ProgressTracker.Step FINALISING_TRANSACTION = new ProgressTracker.Step("Obtaining notary signature and recording transaction.") {
             @Override public ProgressTracker childProgressTracker() {
                 return FinalityFlow.Companion.tracker();
@@ -109,7 +101,7 @@ public class AllocationFlow {
             // Stage 5.Create output states
             final AllocationState outputAllocationState = new AllocationState(inputProjectState.getProjectCode(),
                     inputProjectState.getAllocationKey(), inputProjectState.getDescription(), platformLead, deliveryTeam,
-                    amount, startDate, endDate);
+                    coo, amount, startDate, endDate);
             final ProjectState outputProjectState = inputProjectState.deductAllocationFromBudget(amount);
 
             // Stage 6. Create transaction builder
@@ -155,8 +147,6 @@ public class AllocationFlow {
                     null);
 
             List<StateAndRef<ProjectState>> projects = getServiceHub().getVaultService().queryBy(ProjectState.class, queryCriteria).getStates();
-
-            System.out.println("PROJECT SIZE :: " + projects.size());
 
             if (projects.size() != 1) {
                 throw new FlowException(String.format("Project with id %s not found.", linearId));

@@ -23,17 +23,19 @@ public class AllocationSchemaV1 extends MappedSchema {
         @Column(name = "description") private final String description;
         @Column(name = "platformLead") private final String platformLead;
         @Column(name = "deliveryTeam") private final String deliveryTeam;
+        @Column(name = "coo") private final String coo;
         @Column(name = "allocationAmount") private final int allocationAmount;
         @Column(name = "startDate") private final LocalDateTime startDate;
         @Column(name = "endDate") private final LocalDateTime endDate;
         @Column(name = "linearId") private final UUID linearId;
 
-        public PersistentAllocation(String projectCode, String allocationKey, String description, String platformLead, String deliveryTeam, int allocationAmount, LocalDateTime startDate, LocalDateTime endDate, UUID linearId) {
+        public PersistentAllocation(String projectCode, String allocationKey, String description, String platformLead, String deliveryTeam, String coo, int allocationAmount, LocalDateTime startDate, LocalDateTime endDate, UUID linearId) {
             this.projectCode = projectCode;
             this.allocationKey = allocationKey;
             this.description = description;
             this.platformLead = platformLead;
             this.deliveryTeam = deliveryTeam;
+            this.coo = coo;
             this.allocationAmount = allocationAmount;
             this.startDate = startDate;
             this.endDate = endDate;
@@ -58,6 +60,10 @@ public class AllocationSchemaV1 extends MappedSchema {
 
         public String getDeliveryTeam() {
             return deliveryTeam;
+        }
+
+        public String getCoo() {
+            return coo;
         }
 
         public int getAllocationAmount() {

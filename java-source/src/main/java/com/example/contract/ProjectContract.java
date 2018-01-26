@@ -85,8 +85,8 @@ public class ProjectContract implements Contract {
                         outputProjectState.getProjectCode() != null);
                 require.using("Allocation key must exist.",
                         outputProjectState.getAllocationKey() != null);
-                require.using("Budget must be > 0.",
-                        outputProjectState.getBudget() > 0);
+                require.using("Remaining Budget must be >= 0.",
+                        outputProjectState.getBudget() >= 0);
 
                 //check input against output
                 require.using("Input description must be equal to output description",
