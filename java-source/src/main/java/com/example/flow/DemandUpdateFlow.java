@@ -94,17 +94,17 @@ public class DemandUpdateFlow {
             final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
             final Party initiatorParty = getServiceHub().getMyInfo().getLegalIdentities().get(0);
 
-            // Stage 1. Retrieve obligation specified by linearId from the vault.
+            // Stage 1. Retrieve Demand specified by linearId from the vault.
             progressTracker.setCurrentStep(GENERATING_TRANSACTION);
 
             final StateAndRef<DemandState> demandStateUpd = getDemandStateByLinearId(linearId);
             final DemandState currentDemandState = demandStateUpd.getState().getData();
 
-            // Stage 2. Resolve the lender and borrower identity if the obligation is anonymous.
+            // Stage 2. Resolve sponsor and platform lead identity
             final Party platformLead = currentDemandState.getPlatformLead();
             final Party sponsor = currentDemandState.getSponsor();
-            final PublicKey lenderKey = sponsor.getOwningKey();
-            final PublicKey borrwerKey = platformLead.getOwningKey();
+            final PublicKey sponsorKey = sponsor.getOwningKey();
+            final PublicKey platformLeadKey = platformLead.getOwningKey();
 
             CordaX500Name cioName = new CordaX500Name("CIO", "Singapore", "SG");
             CordaX500Name cooName = new CordaX500Name("COO", "Singapore", "SG");
@@ -123,14 +123,12 @@ public class DemandUpdateFlow {
                 throw new FlowException("Update demand flow must be initiated by the platform lead.");
             }
 
+            //Stage 4. Generate commands
             final DemandState newUpdatedDemand = currentDemandState.updateState(this.amount, this.startDate, this.endDate, Arrays.asList(cio,coo), linearId);
-            final Command<DemandContract.Commands.Update> txCommandUpdate = new Command<>(new DemandContract.Commands.Update(), Arrays.asList(lenderKey, borrwerKey));
+            final Command<DemandContract.Commands.Update> txCommandUpdate = new Command<>(new DemandContract.Commands.Update(), Arrays.asList(sponsorKey, platformLeadKey));
             final Command<ProjectContract.Commands.Create> txCommandApprove = new Command<>(new ProjectContract.Commands.Create(), Arrays.asList(cioKey, cooKey));
 
-
-            // Stage 5
-            progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
-            // Verify that the transaction is valid.
+            //Stage 5. Build transaction
             ProjectState projectState = new ProjectState("P1001", "A1001"
                     , newUpdatedDemand.getDescription()
                     ,newUpdatedDemand.getAmount()
@@ -142,26 +140,25 @@ public class DemandUpdateFlow {
                     .addOutputState(newUpdatedDemand, DEMAND_CONTRACT_ID)
                     .addOutputState(projectState,PROJECT_CONTRACT_ID)
                     .addCommand(txCommandUpdate).addCommand(txCommandApprove);
+
+            // Stage 6. Verify that the transaction is valid.
+            progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
             txBuilder.verify(getServiceHub());
 
-            // Stage 3.
+            // Stage 7. Sign the transaction
             progressTracker.setCurrentStep(SIGNING_TRANSACTION);
-            // Sign the transaction.
-            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder, borrwerKey);
+            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder, platformLeadKey);
 
+            // Stage 8. Send the state to the counterparty, and receive it back with their signature.
+            progressTracker.setCurrentStep(GATHERING_SIGS);
             FlowSession cioSession = initiateFlow(coo);
             FlowSession cooSession = initiateFlow(cio);
-            FlowSession lenderIdentitySession = initiateFlow(sponsor);
-
-            // Stage 4.
-            progressTracker.setCurrentStep(GATHERING_SIGS);
-            // Send the state to the counterparty, and receive it back with their signature.
+            FlowSession sponsorSession = initiateFlow(sponsor);
             final SignedTransaction fullySignedTx = subFlow(
-                    new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(cioSession, cooSession, lenderIdentitySession), CollectSignaturesFlow.Companion.tracker()));
+                    new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(cioSession, cooSession, sponsorSession), CollectSignaturesFlow.Companion.tracker()));
 
-            // Stage 5.
+            // Stage 9. Notarise and record the transaction in all parties' vaults.
             progressTracker.setCurrentStep(FINALISING_TRANSACTION);
-            // Notarise and record the transaction in both parties' vaults.
             return subFlow(new FinalityFlow(fullySignedTx));
         }
     }
