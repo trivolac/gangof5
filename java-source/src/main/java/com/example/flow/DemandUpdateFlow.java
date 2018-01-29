@@ -7,10 +7,7 @@ import com.example.state.DemandState;
 import com.example.state.ProjectState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import net.corda.core.contracts.Command;
-import net.corda.core.contracts.ContractState;
-import net.corda.core.contracts.StateAndRef;
-import net.corda.core.contracts.UniqueIdentifier;
+import net.corda.core.contracts.*;
 import net.corda.core.flows.*;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
@@ -25,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.example.contract.DemandContract.DEMAND_CONTRACT_ID;
 import static com.example.contract.ProjectContract.PROJECT_CONTRACT_ID;
@@ -129,7 +127,10 @@ public class DemandUpdateFlow {
             final Command<ProjectContract.Commands.Create> txCommandApprove = new Command<>(new ProjectContract.Commands.Create(), Arrays.asList(cioKey, cooKey));
 
             //Stage 5. Build transaction
-            ProjectState projectState = new ProjectState("P1001", "A1001"
+            String projectCode = generateProjectCode(initiatorParty);
+            String allocationKey = generateAllocationKey(initiatorParty);
+
+            ProjectState projectState = new ProjectState(projectCode, allocationKey
                     , newUpdatedDemand.getDescription()
                     ,newUpdatedDemand.getAmount()
                     , newUpdatedDemand.getStartDate(), newUpdatedDemand.getEndDate(),
@@ -160,6 +161,52 @@ public class DemandUpdateFlow {
             // Stage 9. Notarise and record the transaction in all parties' vaults.
             progressTracker.setCurrentStep(FINALISING_TRANSACTION);
             return subFlow(new FinalityFlow(fullySignedTx));
+        }
+
+        private String generateProjectCode(Party initiatingPlatformLead){
+            List<String> projectCodes = retrieveAllProjectsCodesWithPlatformLead(initiatingPlatformLead);
+            int index = projectCodes.size() + 1;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("P");
+            sb.append(initiatingPlatformLead.getName().getOrganisation().substring(2,3));
+            for(int i=5; i > (index/10); i--){
+                sb.append(0);
+            }
+            sb.append(index);
+            return sb.toString();
+        }
+
+        private String generateAllocationKey(Party initiatingPlatformLead){
+            List<String> projectCodes = retrieveAllProjectsCodesWithPlatformLead(initiatingPlatformLead);
+            int index = projectCodes.size() + 1;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("A");
+            sb.append(initiatingPlatformLead.getName().getOrganisation().substring(2,3));
+            for(int i=5; i > (index/10); i--){
+                sb.append(0);
+            }
+            sb.append(index);
+            return sb.toString();
+        }
+
+        private List<String> retrieveAllProjectsCodesWithPlatformLead(Party platformLead){
+            //retrieve all projects with DL Team
+            QueryCriteria queryCriteria = new QueryCriteria.LinearStateQueryCriteria(
+                    ImmutableList.of(platformLead),
+                    null,
+                    Vault.StateStatus.ALL,
+                    null);
+            List<StateAndRef<ProjectState>> projects = getServiceHub().getVaultService().queryBy(ProjectState.class, queryCriteria).getStates();
+
+            //return list of project codes
+            return projects.stream()
+                    .map(StateAndRef::getState)
+                    .map(TransactionState::getData)
+                    .map(ProjectState::getProjectCode)
+                    .distinct()
+                    .collect(Collectors.toList());
         }
     }
 

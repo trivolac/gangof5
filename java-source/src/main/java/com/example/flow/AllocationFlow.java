@@ -76,7 +76,7 @@ public class AllocationFlow {
             final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
             final Party initiatorParty = getServiceHub().getMyInfo().getLegalIdentities().get(0);
 
-            // Stage 1. Retrieve obligation specified by linearId from the vault.
+            // Stage 1. Retrieve project specified by linearId from the vault.
             progressTracker.setCurrentStep(GENERATING_TRANSACTION);
             final StateAndRef<ProjectState> inputProjectStateAndRef = getProjectStateByLinearId(projectLinearId);
             final ProjectState inputProjectState = inputProjectStateAndRef.getState().getData();
@@ -103,6 +103,10 @@ public class AllocationFlow {
                     inputProjectState.getAllocationKey(), inputProjectState.getDescription(), platformLead, deliveryTeam,
                     coo, amount, startDate, endDate);
             final ProjectState outputProjectState = inputProjectState.deductAllocationFromBudget(amount);
+
+            // Stage 6. Validate output allocation state against other allocations so that similar DL Team
+            // should not have overlap allocation dates
+            validateDLTeamAllocationDates(outputAllocationState);
 
             // Stage 6. Create transaction builder
             final TransactionBuilder txBuilder = new TransactionBuilder(notary)
@@ -152,6 +156,40 @@ public class AllocationFlow {
                 throw new FlowException(String.format("Project with id %s not found.", linearId));
             }
             return projects.get(0);
+        }
+
+        private void validateDLTeamAllocationDates(AllocationState newAllocationState) throws FlowException {
+            final Party dlTeam = newAllocationState.getDeliveryTeam();
+            final LocalDateTime startDate = newAllocationState.getStartDate();
+            final LocalDateTime endDate = newAllocationState.getEndDate();
+            final String projectCode = newAllocationState.getProjectCode();
+
+            //retrieve all allocations with DL Team
+            QueryCriteria queryCriteria = new QueryCriteria.LinearStateQueryCriteria(
+                    ImmutableList.of(dlTeam),
+                    null,
+                    Vault.StateStatus.UNCONSUMED,
+                    null);
+            List<StateAndRef<AllocationState>> allocations = getServiceHub().getVaultService().queryBy(AllocationState.class, queryCriteria).getStates();
+
+            //loop through allocations of DL team
+            for(StateAndRef<AllocationState> allocationStateStateAndRef : allocations){
+                AllocationState allocationState = allocationStateStateAndRef.getState().getData();
+
+                //validate allocation dates if DL teams and project code are equal
+                if(allocationState.getDeliveryTeam().equals(dlTeam) &&
+                        allocationState.getProjectCode().equals(projectCode)){
+                    LocalDateTime startDateToCheck = allocationState.getStartDate();
+                    LocalDateTime endDateToCheck = allocationState.getEndDate();
+
+                    //check overlap of start and end date
+                    LocalDateTime maxStartDate = (startDate.isAfter(startDateToCheck)) ? startDate : startDateToCheck;
+                    LocalDateTime minEndDate = (endDate.isBefore(endDateToCheck)) ? endDate : endDateToCheck;
+                    if(maxStartDate.isBefore(minEndDate) || maxStartDate.isEqual(minEndDate)){
+                        throw new FlowException("Dates specified must not overlap with existing allocation for delivery team.");
+                    }
+                }
+            }
         }
     }
 

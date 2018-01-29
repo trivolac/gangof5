@@ -69,6 +69,10 @@ public class AllocationContract implements Contract {
 
             require.using("End date cannot be earlier or equal to start date",
                     outputAllocationState.getStartDate().isBefore(outputAllocationState.getEndDate()));
+            require.using("Start date cannot be earlier than Project start date",
+                    !outputAllocationState.getStartDate().isBefore(inputProjectState.getStartDate()));
+            require.using("End date cannot be later than Project end date",
+                    !outputAllocationState.getEndDate().isAfter(inputProjectState.getEndDate()));
 
             return null;
         });
