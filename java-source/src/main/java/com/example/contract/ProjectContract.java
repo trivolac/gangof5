@@ -6,7 +6,11 @@ import com.example.state.ProjectState;
 import net.corda.core.contracts.CommandData;
 import net.corda.core.contracts.CommandWithParties;
 import net.corda.core.contracts.Contract;
+import net.corda.core.identity.Party;
 import net.corda.core.transactions.LedgerTransaction;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static net.corda.core.contracts.ContractsDSL.requireSingleCommand;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
@@ -24,33 +28,64 @@ public class ProjectContract implements Contract {
                         tx.getInputs().size() == 1);
                 require.using("Two output states should be created.",
                         tx.getOutputs().size() == 2);
-                final ProjectState out = tx.outputsOfType(ProjectState.class).get(0);
-                final DemandState in = tx.inputsOfType(DemandState.class).get(0);
+
+                final ProjectState outputProjectState = tx.outputsOfType(ProjectState.class).get(0);
+                final DemandState outputDemandState = tx.outputsOfType(DemandState.class).get(0);
+                final DemandState inputDemandState = tx.inputsOfType(DemandState.class).get(0);
+                require.using("There must be a Project output.",
+                        outputProjectState!= null);
+                require.using("There must be a Demand output.",
+                        outputDemandState!= null);
+
                 require.using("Sponsor must exist.",
-                        out.getSponsor() != null);
+                        outputProjectState.getSponsor() != null);
                 require.using("Platform Lead must exist.",
-                        out.getPlatformLead() != null);
+                        outputProjectState.getPlatformLead() != null);
                 require.using("CIO must exist.",
-                        out.getCio() != null);
+                        outputProjectState.getCio() != null);
                 require.using("COO must exist.",
-                        out.getCoo() != null);
+                        outputProjectState.getCoo() != null);
 
                 require.using("Description must exist.",
-                        !out.getDescription().isEmpty());
+                        !outputProjectState.getDescription().isEmpty());
                 require.using("Start date must exist.",
-                        out.getStartDate() != null);
+                        outputProjectState.getStartDate() != null);
                 require.using("End date must exist.",
-                        out.getEndDate() != null);
+                        outputProjectState.getEndDate() != null);
+                require.using("The startDate should not be equal to or later than end date.",
+                        outputProjectState.getStartDate().isBefore(outputProjectState.getEndDate()));
                 require.using("Project code must exist.",
-                        out.getProjectCode() != null);
+                        outputProjectState.getProjectCode() != null);
                 require.using("Allocation key must exist.",
-                        out.getAllocationKey() != null);
+                        outputProjectState.getAllocationKey() != null);
                 require.using("Budget must be > 0.",
-                        out.getBudget() > 0);
+                        outputProjectState.getBudget() > 0);
 
                 //CHECK INPUT AGAINST OUTPUT
                 require.using("Input description must be equal to output description",
-                        out.getDescription().equals(in.getDescription()));
+                        outputProjectState.getDescription().equals(inputDemandState.getDescription()));
+                require.using("Input sponsor must be equal to output sponsor",
+                        outputProjectState.getSponsor().equals(inputDemandState.getSponsor()));
+                require.using("Input platform lead must be equal to output platform lead",
+                        outputProjectState.getPlatformLead().equals(inputDemandState.getPlatformLead()));
+
+                //CHECK BOTH OUTPUTS
+                require.using("Description of Demand output must be equal to description of Project output",
+                        outputProjectState.getDescription().equals(outputDemandState.getDescription()));
+                require.using("Sponsor of Demand output must be equal to sponsor of Project output",
+                        outputProjectState.getSponsor().equals(outputDemandState.getSponsor()));
+                require.using("Platform lead of Demand output must be equal to platform lead of Project output",
+                        outputProjectState.getPlatformLead().equals(outputDemandState.getPlatformLead()));
+                require.using("Start date of Demand output must be equal to start date of Project output",
+                        outputProjectState.getStartDate().equals(outputDemandState.getStartDate()));
+                require.using("End date of Demand output must be equal to end date of Project output",
+                        outputProjectState.getEndDate().equals(outputDemandState.getEndDate()));
+                require.using("Amount of Demand output must be equal to budget of Project output",
+                        outputProjectState.getBudget() == outputDemandState.getAmount());
+
+                List<Party> approvalPartiesToCheck = Arrays.asList(outputProjectState.getCoo(), outputProjectState.getCio());
+                require.using("Approval parties of Demand output must contain CIO and COO of Project output",
+                        outputDemandState.getApprovalParties().containsAll(approvalPartiesToCheck));
 
                 return null;
             });
@@ -65,6 +100,10 @@ public class ProjectContract implements Contract {
                 final ProjectState inputProjectState = tx.inputsOfType(ProjectState.class).get(0);
                 final ProjectState outputProjectState = tx.outputsOfType(ProjectState.class).get(0);
                 final AllocationState outputAllocationState = tx.outputsOfType(AllocationState.class).get(0);
+                require.using("There must be a Project output.",
+                        outputProjectState!= null);
+                require.using("There must be an Allocation output.",
+                        outputAllocationState!= null);
 
                 require.using("Sponsor must exist.",
                         outputProjectState.getSponsor() != null);
@@ -85,7 +124,7 @@ public class ProjectContract implements Contract {
                         outputProjectState.getProjectCode() != null);
                 require.using("Allocation key must exist.",
                         outputProjectState.getAllocationKey() != null);
-                require.using("Remaining Budget must be >= 0.",
+                require.using("Remaining Budget must not be negative.",
                         outputProjectState.getBudget() >= 0);
 
                 //check input against output
