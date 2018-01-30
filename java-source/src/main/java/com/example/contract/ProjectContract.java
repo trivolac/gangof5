@@ -151,6 +151,10 @@ public class ProjectContract implements Contract {
                 require.using("Remaining budget must be equal to (input project budget - allocated amount).",
                         outputProjectState.getBudget() == (inputProjectState.getBudget() - outputAllocationState.getAllocationAmount()));
 
+                //check that delivery team is included in project
+                require.using("Delivery team must be a participant in project.",
+                        outputProjectState.getDeliveryTeams().contains(outputAllocationState.getDeliveryTeam()));
+
                 return null;
             });
 

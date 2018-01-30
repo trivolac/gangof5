@@ -5,9 +5,11 @@ import net.corda.core.schemas.MappedSchema;
 import net.corda.core.schemas.PersistentState;
 
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class ProjectSchemaV1 extends MappedSchema {
@@ -28,13 +30,14 @@ public class ProjectSchemaV1 extends MappedSchema {
         @Column(name = "platformLead") private final String platformLead;
         @Column(name = "cio") private final String cio;
         @Column(name = "coo") private final String coo;
-        @Column(name = "deliveryTeam") private final String deliveryTeam;
+        @Column(name = "deliveryTeams") @ElementCollection
+        private final List<String> deliveryTeams;
         @Column(name = "demandId") private final String demandId;
         @Column(name = "linearId") private final UUID linearId;
 
         public PersistentProject(String projectCode, String allocationKey, String description, int budget,
                                  LocalDateTime startDate, LocalDateTime endDate, String sponsor, String platformLead,
-                                 String cio, String coo, String deliveryTeam, String demandId, UUID linearId) {
+                                 String cio, String coo, List<String> deliveryTeams, String demandId, UUID linearId) {
             this.projectCode = projectCode;
             this.allocationKey = allocationKey;
             this.description = description;
@@ -45,7 +48,7 @@ public class ProjectSchemaV1 extends MappedSchema {
             this.platformLead = platformLead;
             this.cio = cio;
             this.coo = coo;
-            this.deliveryTeam = deliveryTeam;
+            this.deliveryTeams = deliveryTeams;
             this.demandId = demandId;
             this.linearId = linearId;
         }
@@ -90,8 +93,8 @@ public class ProjectSchemaV1 extends MappedSchema {
             return coo;
         }
 
-        public String getDeliveryTeam() {
-            return deliveryTeam;
+        public List<String> getDeliveryTeams() {
+            return deliveryTeams;
         }
 
         public UUID getLinearId() {

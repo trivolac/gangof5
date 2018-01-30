@@ -106,12 +106,12 @@ public class DemandUpdateFlow {
 
             CordaX500Name cioName = new CordaX500Name("CIO", "Singapore", "SG");
             CordaX500Name cooName = new CordaX500Name("COO", "Singapore", "SG");
-            CordaX500Name dl1Name = new CordaX500Name("DLTeam1", "Singapore", "SG");
+//            CordaX500Name dl1Name = new CordaX500Name("DLTeam1", "Singapore", "SG");
 
 
             final Party cio = getServiceHub().getIdentityService().wellKnownPartyFromX500Name(cioName);
             final Party coo = getServiceHub().getIdentityService().wellKnownPartyFromX500Name(cooName);
-            final Party dl1 = getServiceHub().getIdentityService().wellKnownPartyFromX500Name(dl1Name);
+//            final Party dl1 = getServiceHub().getIdentityService().wellKnownPartyFromX500Name(dl1Name);
 
             final PublicKey cioKey = cio.getOwningKey();
             final PublicKey cooKey = coo.getOwningKey();
@@ -127,14 +127,14 @@ public class DemandUpdateFlow {
             final Command<ProjectContract.Commands.Create> txCommandApprove = new Command<>(new ProjectContract.Commands.Create(), Arrays.asList(cioKey, cooKey));
 
             //Stage 5. Build transaction
-            String projectCode = generateProjectCode(initiatorParty);
-            String allocationKey = generateAllocationKey(initiatorParty);
+            final String projectCode = generateProjectCode(initiatorParty);
+            final String allocationKey = generateAllocationKey(initiatorParty);
 
-            ProjectState projectState = new ProjectState(projectCode, allocationKey
+            final ProjectState projectState = new ProjectState(projectCode, allocationKey
                     , newUpdatedDemand.getDescription()
                     ,newUpdatedDemand.getAmount()
                     , newUpdatedDemand.getStartDate(), newUpdatedDemand.getEndDate(),
-                    newUpdatedDemand.getSponsor(), newUpdatedDemand.getPlatformLead(),cio, coo,dl1, currentDemandState.getLinearId().getId().toString());
+                    newUpdatedDemand.getSponsor(), newUpdatedDemand.getPlatformLead(),cio, coo, currentDemandState.getLinearId().getId().toString());
 
             final TransactionBuilder txBuilder = new TransactionBuilder(notary)
                     .addInputState(demandStateUpd)
