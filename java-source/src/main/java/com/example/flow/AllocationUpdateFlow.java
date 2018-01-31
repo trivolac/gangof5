@@ -241,12 +241,12 @@ public class AllocationUpdateFlow {
 
                         //add delivery team validation here
                         String party = getServiceHub().getMyInfo().getLegalIdentities().get(0).getName().getOrganisation();
-                        if("DL1".equals(party)){
-                            require.using("Allocation amount cannot be more than 100,000.", allocationState.getAllocationAmount() <= 100000);
+                        if("DLTeam1".equals(party)){
+                            require.using("Delivery Team 1 does not accept an allocation amount of more than 100,000.", allocationState.getAllocationAmount() <= 100000);
                         }
 
-                        if("DL2".equals(party)){
-                            require.using("Allocation amount cannot be more than 80,000.", allocationState.getAllocationAmount() <= 80000);
+                        if("DLTeam2".equals(party)){
+                            require.using("Delivery Team 2 does not accept an allocation amount of more than 80,000.", allocationState.getAllocationAmount() <= 80000);
                         }
 
                         return null;
