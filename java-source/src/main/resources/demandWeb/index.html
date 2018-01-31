@@ -170,6 +170,60 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     </form>
 </script>
 
+<script type="text/ng-template" id="updateAllocationModal.html">
+    <div class="modal-header">
+        <h4 class="modal-title">Update Allocation For Delivery Team</h4>
+    </div>
+    <form>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="updateAllocationProjectId" class="control-label">Allocation ID:</label>
+                <input type="text" class="form-control" id="updateAllocationProjectId" ng-value="updateAllocationModalInstance.id" disabled>
+            </div>
+            <div class="form-group">
+                <label for="updateAllocationProjectDescription" class="control-label">Description:</label>
+                <input type="text" class="form-control" id="updateAllocationProjectDescription" ng-value="updateAllocationModalInstance.description" disabled>
+            </div>
+            <div class="form-group">
+                <label for="updateAllocationProjectBudget" class="control-label">Remaining Project Budget (Int):</label>
+                <input type="text" class="form-control" id="updateAllocationProjectBudget" ng-value="updateAllocationModalInstance.budget" disabled>
+            </div>
+            <div class="form-group">
+                <label for="updateAllocationDeliveryTeam" class="control-label">Delivery Team:</label>
+                <select ng-model="updateAllocationModalInstance.form.deliveryTeam" class="form-control" id="updateAllocationDeliveryTeam"
+                        ng-options="deliveryTeam as deliveryTeam for deliveryTeam in updateAllocationModalInstance.deliveryTeams" disabled>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="updateAllocationAmount" class="control-label">Allocation Amount (Int):</label>
+                <input type="text" class="form-control" id="updateAllocationAmount"
+                       ng-model="updateAllocationModalInstance.form.allocationAmount">
+            </div>
+            <div class="form-group">
+                <label for="updateAllocationStartDate" class="control-label">Start Date:</label>
+                <input type="date" ng-model="updateAllocationModalInstance.form.startDate" class="form-control"
+                       id="updateAllocationStartDate">
+            </div>
+            <div class="form-group">
+                <label for="updateAllocationEndDate" class="control-label">End Date:</label>
+                <input type="date" ng-model="updateAllocationModalInstance.form.endDate" class="form-control"
+                       id="updateAllocationEndDate" >
+            </div>
+            <div ng-show="updateAllocationModalInstance.formError" class="form-group">
+                <div class="alert alert-danger" role="alert">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    <span class="sr-only">Error:</span>
+                    Enter valid Allocation parameters
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button ng-click="updateAllocationModalInstance.cancel()" type="button" class="btn btn-default">Close</button>
+            <button ng-click="updateAllocationModalInstance.update(updateAllocationModalInstance.id)" type="button" class="btn btn-warning">Update Allocation</button>
+        </div>
+    </form>
+</script>
+
 <script type="text/ng-template" id="messageContent.html">
     <div class="modal-body" id="modal-body">
         {{ modalInstanceTwo.message }}
@@ -300,7 +354,7 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                 </table>
                 <br/>
                 <div class="float-right"  ng-show="demoApp.isPlatformLead">
-                    <button ng-click="demoApp.openAllocationModal(project)" type="button" class="btn btn-default">Allocate Delivery Teams</button>
+                    <button ng-click="demoApp.openAllocationModal(project)" type="button" class="btn btn-success">Allocate Delivery Teams</button>
                 </div>
             </div>
         </div>
@@ -360,6 +414,10 @@ COMING WEEKS WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td>{{allocation.allocationAmount}}</td>
                     </tr>
                 </table>
+                <br/>
+                <div class="float-right"  ng-show="demoApp.isCoo">
+                    <button ng-click="demoApp.openUpdateAllocationModal(allocation)" type="button" class="btn btn-warning">Update Allocation</button>
+                </div>
             </div>
         </div>
     </div>

@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -164,6 +163,12 @@ public class ProjectState implements LinearState, QueryableState {
         }
 
         return new ProjectState(this.projectCode, this.allocationKey, this.description, this.budget - amount,
+                this.startDate, this.endDate, this.sponsor, this.platformLead, this.cio, this.coo, this.deliveryTeams,
+                this.demandId, this.linearId);
+    }
+
+    public ProjectState updateProjectUponUpdateAllocation(int oldAmount, int newAmount){
+        return new ProjectState(this.projectCode, this.allocationKey, this.description, this.budget + oldAmount - newAmount,
                 this.startDate, this.endDate, this.sponsor, this.platformLead, this.cio, this.coo, this.deliveryTeams,
                 this.demandId, this.linearId);
     }

@@ -40,6 +40,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
         let organisation = demoApp.thisNode.split(",")[2].split("=")[1];
         demoApp.isSponsor = organisation === "Sponsor";
         demoApp.isPlatformLead = organisation.substring(0,2) === "PL";
+        demoApp.isCoo = organisation === "COO";
     });
 
     $http.get("/api/demand/peers").then((response) => peers = response.data.peers);
@@ -95,6 +96,28 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
                 id: () => project.linearId.id,
                 description: () => project.description,
                 budget: () => project.budget
+            }
+        });
+
+        modalInstance.result.then(() => {}, () => {});
+    };
+
+    demoApp.openUpdateAllocationModal = (allocation) => {
+        const modalInstance = $uibModal.open({
+            templateUrl: 'updateAllocationModal.html',
+            controller: 'ModalUpdateAllocationCtrl',
+            controllerAs: 'updateAllocationModalInstance',
+            resolve: {
+                demoApp: () => demoApp,
+                apiBaseURL: () => apiProjBaseUrl,
+                deliveryTeams: () => deliveryTeams,
+                id: () => allocation.linearId.id,
+                description: () => allocation.description,
+                projectCode: () => allocation.projectCode,
+                deliveryTeam: () => allocation.deliveryTeam,
+                allocationAmount:() => allocation.allocationAmount,
+                startDate:() => allocation.startDate,
+                endDate:() => allocation.endDate
             }
         });
 
@@ -197,6 +220,100 @@ app.controller('ModalUpdateDemandCtrl', function ($http, $location, $uibModalIns
         if (day.length < 2) day = '0' + day;
 
         return [day, month, year].join('/');
+    }
+});
+
+app.controller('ModalUpdateAllocationCtrl', function ($http, $location, $uibModalInstance, $uibModal, demoApp, apiBaseURL, deliveryTeams, id, description, projectCode, deliveryTeam, allocationAmount, startDate, endDate) {
+    const updateAllocationModalInstance = this;
+
+    updateAllocationModalInstance.deliveryTeams = deliveryTeams;
+    updateAllocationModalInstance.formError = false;
+    updateAllocationModalInstance.id = id;
+    updateAllocationModalInstance.description = description;
+    updateAllocationModalInstance.form = {
+        allocationAmount : allocationAmount,
+        startDate : getDateObjectFromString(startDate),
+        endDate : getDateObjectFromString(endDate),
+        deliveryTeam : deliveryTeam
+    };
+
+    const getProjectEndpoint = `${apiBaseURL}code/${projectCode}`;
+    $http.get(getProjectEndpoint).then(
+        (result) => {
+            let responseData = result.data.state.data;
+            updateAllocationModalInstance.budget = responseData.budget;
+        },
+        () => {
+            updateAllocationModalInstance.displayMessage("Could not retrieve project");
+        }
+    );
+
+    // Validate and create Allocation.
+    updateAllocationModalInstance.update = (id) => {
+        if (invalidFormInput()) {
+            updateAllocationModalInstance.formError = true;
+        } else {
+            updateAllocationModalInstance.formError = false;
+
+            $uibModalInstance.close();
+
+            let startDate = formatDate(updateAllocationModalInstance.form.startDate);
+            let endDate = formatDate(updateAllocationModalInstance.form.endDate);
+            let allocationAmt = updateAllocationModalInstance.form.allocationAmount;
+
+            //TODO add api call
+            const allocationEndpoint = `${apiBaseURL}update-allocation?amount=${allocationAmt}&startDate=${startDate}&endDate=${endDate}&allocationId=${id}`;
+
+            $http.post(allocationEndpoint).then(
+                (result) => {
+                    updateAllocationModalInstance.displayMessage(result);
+                    demoApp.getDemands();
+                    demoApp.getProjects();
+                    demoApp.getAllocations();
+                },
+                (result) => {
+                    updateAllocationModalInstance.displayMessage(result);
+                }
+            );
+        }
+    };
+
+    updateAllocationModalInstance.displayMessage = (message) => {
+        const modalInstanceTwo = $uibModal.open({
+            templateUrl: 'messageContent.html',
+            controller: 'messageCtrl',
+            controllerAs: 'modalInstanceTwo',
+            resolve: { message: () => message }
+        });
+
+        // No behaviour on close / dismiss.
+        modalInstanceTwo.result.then(() => {}, () => {});
+    };
+
+    // Close create Demand modal dialogue.
+    updateAllocationModalInstance.cancel = () => $uibModalInstance.dismiss();
+
+    // Validate Allocation
+    function invalidFormInput() {
+        return isNaN(updateAllocationModalInstance.form.allocationAmount) || (updateAllocationModalInstance.form.deliveryTeam === undefined);
+    }
+
+    //format date
+    function formatDate(date){
+        let month = '' + (date.getMonth() + 1),
+            day = '' + date.getDate(),
+            year = date.getFullYear();
+
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+
+        return [day, month, year].join('/');
+    }
+
+    function getDateObjectFromString(stringDate){
+        let parts = stringDate.split("/");
+        let formattedDateString = parts[2] + "-" + parts[1] + "-" + parts[0];
+        return new Date(formattedDateString);
     }
 });
 

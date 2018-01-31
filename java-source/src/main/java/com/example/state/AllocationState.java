@@ -124,4 +124,9 @@ public class AllocationState implements LinearState, QueryableState{
     public List<AbstractParty> getParticipants() {
         return Arrays.asList(platformLead, deliveryTeam, coo);
     }
+
+    public AllocationState updateAllocationState(int allocationAmount, LocalDateTime startDate, LocalDateTime endDate){
+        return new AllocationState(this.projectCode, this.allocationKey, this.description, this.platformLead,
+                this.deliveryTeam, this.coo, allocationAmount, startDate, endDate, this.linearId);
+    }
 }

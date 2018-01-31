@@ -1,6 +1,7 @@
 package com.example.api;
 
 import com.example.flow.AllocationFlow;
+import com.example.flow.AllocationUpdateFlow;
 import com.example.state.AllocationState;
 import com.example.state.ProjectState;
 import com.example.util.ResponseUtil;
@@ -31,8 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.*;
 
 /**
  * Created by Shailendra on 17-01-2018.
@@ -71,6 +71,22 @@ public class ProjectApi {
     @Produces(MediaType.APPLICATION_JSON)
     public List<StateAndRef<ProjectState>> getProjects() {
         return rpcOps.vaultQuery(ProjectState.class).getStates();
+    }
+
+    @GET
+    @Path("code/{projectCode}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getProjectByProjectCode(@PathParam("projectCode") String projectCode) {
+        QueryCriteria criteria = new QueryCriteria.LinearStateQueryCriteria(
+                null, null, Vault.StateStatus.UNCONSUMED, null);
+        List<StateAndRef<ProjectState>> projects = rpcOps.vaultQueryByCriteria(criteria, ProjectState.class).getStates();
+        for(StateAndRef<ProjectState> projectStateStateAndRef : projects){
+            ProjectState projectState = projectStateStateAndRef.getState().getData();
+            if(projectCode.equals(projectState.getProjectCode())){
+                return Response.status(OK).entity(projectStateStateAndRef).build();
+            }
+        }
+        return Response.status(NOT_FOUND).entity("Project with specified project code not found.\n").build();
     }
 
     @GET
@@ -149,6 +165,75 @@ public class ProjectApi {
             @QueryParam("projectId") String projectId
     ){
         int amt = Integer.parseInt(amount);
+        if (amt  < 0 ) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'Budget Amount' must be greater than zero.\n").build();
+        }
+        if (startDate == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
+        }
+        if (endDate == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' missing or has wrong format.\n").build();
+        }
+
+        //parse date
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDateTime startDateObj;
+        LocalDateTime endDateObj;
+
+        try{
+            startDateObj = LocalDateTime.of(LocalDate.parse(startDate, formatter), LocalDateTime.MIN.toLocalTime());
+        }catch(DateTimeParseException e){
+            return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
+        }
+
+        try{
+            endDateObj = LocalDateTime.of(LocalDate.parse(endDate, formatter), LocalDateTime.MIN.toLocalTime());
+        }catch(DateTimeParseException e){
+            return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' missing or has wrong format.\n").build();
+        }
+
+        //delivery team
+        final Party deliveryTeam = rpcOps.wellKnownPartyFromX500Name(partyName);
+        if (deliveryTeam == null) {
+            return Response.status(BAD_REQUEST).entity("Party named " + partyName + "cannot be found.\n").build();
+        }
+
+        //linear id
+        logger.error("Linear ID");
+        UniqueIdentifier projectLinearId = UniqueIdentifier.Companion.fromString(projectId);
+
+        try {
+            FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
+                    .startTrackedFlowDynamic(AllocationFlow.Initiator.class, projectLinearId, deliveryTeam, amt, startDateObj, endDateObj);
+            flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s%n", evt));
+
+            // The line below blocks and waits for the flow to return.
+            final SignedTransaction result = flowHandle
+                    .getReturnValue()
+                    .get();
+
+            final String msg = String.format("Transaction id %s committed to ledger.\nAllocation has been created.", result.getId());
+            final JSONObject returnJsonObj = ResponseUtil.generateSuccessJsonObject(msg);
+            return Response.status(CREATED).entity(returnJsonObj).build();
+
+        } catch (Throwable ex) {
+            final String msg = ex.getMessage();
+            logger.error(ex.getMessage(), ex);
+            final JSONObject returnJsonObj = ResponseUtil.generateErrorJsonObject(msg);
+            return Response.status(BAD_REQUEST).entity(returnJsonObj).build();
+        }
+    }
+
+    @POST
+    @Path("update-allocation")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateAllocation(
+            @QueryParam("amount") String amount,
+            @QueryParam("startDate") String startDate,
+            @QueryParam("endDate") String endDate,
+            @QueryParam("allocationId") String allocationId
+    ){
+        int amt = Integer.parseInt(amount);
         logger.error("Starting validation");
         if (amt  < 0 ) {
             return Response.status(BAD_REQUEST).entity("Query parameter 'Budget Amount' must be greater than zero.\n").build();
@@ -157,7 +242,7 @@ public class ProjectApi {
             return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
         }
         if (endDate == null) {
-            return Response.status(BAD_REQUEST).entity("Query parameter 'startDate' missing or has wrong format.\n").build();
+            return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' missing or has wrong format.\n").build();
         }
 
         //parse date
@@ -178,21 +263,14 @@ public class ProjectApi {
             return Response.status(BAD_REQUEST).entity("Query parameter 'endDate' missing or has wrong format.\n").build();
         }
 
-        //delivery team
-        logger.error("Delivery Team");
-        final Party deliveryTeam = rpcOps.wellKnownPartyFromX500Name(partyName);
-        if (deliveryTeam == null) {
-            return Response.status(BAD_REQUEST).entity("Party named " + partyName + "cannot be found.\n").build();
-        }
-
         //linear id
-        logger.error("Linear ID");
-        UniqueIdentifier projectLinearId = UniqueIdentifier.Companion.fromString(projectId);
+        logger.error("Allocation ID");
+        UniqueIdentifier allocationLinearId = UniqueIdentifier.Companion.fromString(allocationId);
 
         logger.error("Start Flow");
         try {
             FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
-                    .startTrackedFlowDynamic(AllocationFlow.Initiator.class, projectLinearId, deliveryTeam, amt, startDateObj, endDateObj);
+                    .startTrackedFlowDynamic(AllocationUpdateFlow.Initiator.class, allocationLinearId, amt, startDateObj, endDateObj);
             flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s%n", evt));
 
             // The line below blocks and waits for the flow to return.
@@ -200,7 +278,7 @@ public class ProjectApi {
                     .getReturnValue()
                     .get();
 
-            final String msg = String.format("Transaction id %s committed to ledger.\nAllocation has been created.", result.getId());
+            final String msg = String.format("Transaction id %s committed to ledger.\nAllocation has been successfully updated.", result.getId());
             final JSONObject returnJsonObj = ResponseUtil.generateSuccessJsonObject(msg);
             return Response.status(CREATED).entity(returnJsonObj).build();
 
